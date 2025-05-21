@@ -56,3 +56,6 @@ AI
 ![Flask](https://img.shields.io/badge/Flask-000000?style=flat&logo=flask&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-111111?style=flat&logo=langchain&logoColor=white)
+
+
+### 사이트 둘러보기: https://shiny-chebakia-79e9b7.netlify.app/
