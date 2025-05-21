@@ -40,9 +40,18 @@ export default function TravelStyleForm() {
           나의 여행 스타일을 분석하여 맞춤형 여행 코스를 추천해드립니다.
         </p>
 
-        {/* 목적지 입력 */}
+        {/* 출발지 입력 */}
         <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">여행 목적지</h2>
+          <h2 className="text-lg font-semibold mb-4">여행 출발지</h2>
+          <input type="text"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            className="w-full border border-gray-300 rounded px-4 py-2"
+            placeholder="ex) 서울역"
+          />
+
+        {/* 목적지 입력 */}
+          <h2 className="text-lg font-semibold mt-4 mb-4">여행 목적지</h2>
           <input type="text"
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
