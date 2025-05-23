@@ -55,3 +55,20 @@ def delete_schedule(db: Session, schedule_id: int, user_id: int):
     db.delete(schedule)
     db.commit()
     return schedule
+
+def create_budget(db: Session, schedule_id: int, food_cost: int, entry_fees: int, transport_cost: int):
+    total = food_cost + entry_fees + transport_cost
+    budget = models.Budget(
+        schedule_id=schedule_id,
+        food_cost=food_cost,
+        entry_fees=entry_fees,
+        transport_cost=transport_cost,
+        total_budget=total
+    )
+    db.add(budget)
+    db.commit()
+    db.refresh(budget)
+    return budget
+
+def get_budget_by_schedule_id(db: Session, schedule_id: int):
+    return db.query(models.Budget).filter(models.Budget.schedule_id == schedule_id).first()

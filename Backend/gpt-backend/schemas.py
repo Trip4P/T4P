@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
+from datetime import datetime
 
 class UserCreate(BaseModel):
     username: str
@@ -54,3 +55,20 @@ class ScheduleUpdate(BaseModel):
     emotions: Optional[str]
     companions: Optional[str]
     schedule_json: Optional[str]
+
+from pydantic import BaseModel
+
+class BudgetResponse(BaseModel):
+    id: int
+    schedule_id: int
+    food_cost: int
+    entry_fees: int
+    transport_cost: int
+    total_budget: int
+    created_at: str 
+
+    class Config:
+        orm_mode = True  #Pydantic 모델로 변환
+
+
+        

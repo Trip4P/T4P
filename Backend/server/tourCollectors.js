@@ -81,7 +81,7 @@ async function searchPlacesWithPagination(query) {
 
 // 장소 상세정보 조회
 async function getPlaceDetails(placeId) {
-  const fields = 'name,rating,formatted_address,user_ratings_total,price_level,reviews,photos,types,opening_hours,formatted_phone_number';
+  const fields = 'name,rating,formatted_address,user_ratings_total,price_level,reviews,photos,types,opening_hours,formatted_phone_number, geometry';
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${API_KEY}&language=ko`;
   const response = await axios.get(url);
 
@@ -149,6 +149,8 @@ for (const place of allPlaces) {
             area: place.area,
             name: detail.name,
             location: detail.formatted_address,
+            latitude: detail.geometry?.location?.lat || null,
+            longitude: detail.geometry?.location?.lng || null,
             rating: detail.rating || null,
             review_count: detail.user_ratings_total || 0,
             price_level: Number.isInteger(detail.price_level) ? detail.price_level : null,

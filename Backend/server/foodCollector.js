@@ -85,7 +85,7 @@ async function searchPlacesWithPagination(query) {
 }
 
 async function getPlaceDetails(placeId) {
-  const fields = 'name,rating,formatted_address,user_ratings_total,price_level,reviews,photos,opening_hours,formatted_phone_number';
+  const fields = 'name,rating,formatted_address,user_ratings_total,price_level,reviews,photos,opening_hours,formatted_phone_number, geometry';
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${API_KEY}&language=ko`;
   const response = await axios.get(url);
 
@@ -174,6 +174,8 @@ const food_type = classifyFoodType(combinedText); // 아까 만든 함수
             place_id: place.place_id,
             name: detail.name,
             location: detail.formatted_address,
+            latitude: detail.geometry?.location?.lat || null,
+            longitude: detail.geometry?.location?.lng || null,
             rating: detail.rating,
             review_count: detail.user_ratings_total,
             price_level: detail.price_level,

@@ -10,13 +10,12 @@ async function savePlaceToDB(place) {
         place_id, name, location, rating, review_count, price_level, image_url,
         style_activity, style_hotplace, style_nature, style_landmark,
         style_healing, style_culture, style_photo, style_shopping, style_exotic,
-        opening_hours, phone_number, created_at, area, opening_periods
+        opening_hours, phone_number, created_at, area, opening_periods, latitude, longitude
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11,
-        $12, $13, $14, $15, $16,
-        $17, $18, $19, $20, $21
+        $8, $9, $10, $11, $12, $13, $14, $15, $16,
+        $17, $18, $19, $20, $21, $22, $23
       )
       ON CONFLICT (place_id) DO NOTHING;
     `;
@@ -42,7 +41,9 @@ async function savePlaceToDB(place) {
       place.phone_number,
       place.created_at,
       place.area,
-      place.opening_periods
+      place.opening_periods,
+      place.latitude, 
+      place.longitude 
     ];
 
     await client.query(query, values);
