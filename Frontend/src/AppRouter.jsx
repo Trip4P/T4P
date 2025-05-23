@@ -4,9 +4,9 @@ import TravelStyleForm from './pages/TravelStyleForm.jsx';
 import TravelPlan from './pages/TravelPlan.jsx';
 import Budget from './pages/Budget.jsx';
 import BudgetInput from './pages/BudgetInput.jsx';
-import HotPlaceInput from './pages/HotPlaceInput.jsx'
-import HotPlaceRecommend from './pages/HotPlaceRecommend.jsx'
-import HotPlaceDetail from './pages/HotPlaceDetail.jsx'
+import RestaurantInput from './pages/RestaurantInput.jsx'
+import RestaurantRecommend from './pages/RestaurantRecommend.jsx'
+import RestaurantDetail from './pages/RestaurantDetail.jsx'
 
 export default function AppRouter() {
   return (
@@ -17,9 +17,9 @@ export default function AppRouter() {
         <Route path="/TravelPlan" element={<TravelPlan />} />
         <Route path="/Budget" element={<Budget />} />
         <Route path="/BudgetInput" element={<BudgetInput />} />
-        <Route path="/HotPlaceInput" element={<HotPlaceInput />} />
-        <Route path="/HotPlaceRecommend" element={<HotPlaceRecommend />} />
-        <Route path="/HotPlaceDetail" element={<HotPlaceDetail />} />
+        <Route path="/RestaurantInput" element={<RestaurantInput />} />
+        <Route path="/RestaurantRecommend" element={<RestaurantRecommend />} />
+        <Route path="/RestaurantDetail" element={<RestaurantDetail />} />
       </Routes>
     </Router>
   )

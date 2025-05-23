@@ -68,7 +68,7 @@ export default function TasteProfilePage() {
 
           <div className="text-center mt-10">
             <button
-              onClick={() => navigate("/HotPlaceRecommend")}
+              onClick={() => navigate("/RestaurantRecommend")}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-full shadow-md transition"
             >
               분석 시작하기

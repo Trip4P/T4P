@@ -54,7 +54,7 @@ export default function RestaurantRecommendationPage() {
               </p>
               <div className="mt-3 space-x-2">
                 <button
-                  onClick={() => navigate("/HotPlaceDetail")}
+                  onClick={() => navigate("/RestaurantDetail")}
                   className="bg-blue-600 text-white text-sm px-3 py-1 rounded-lg hover:bg-blue-700"
                 >
                   상세보기
