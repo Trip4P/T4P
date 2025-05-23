@@ -68,7 +68,7 @@ export default function TravelPlan() {
 
         {/* Tip Box */}
         <div className="flex items-start bg-blue-100 p-4 rounded-lg mb-6">
-          <div className="mr-3 text-2xl">💡</div>
+          <div className="mr-3 text-2xl">AI 코멘트</div>
           <p className="text-sm">
             여유롭고 감성적인 여행을 원하셨죠? 감성 카페와 현지인 맛집 위주로
             구성했어요!

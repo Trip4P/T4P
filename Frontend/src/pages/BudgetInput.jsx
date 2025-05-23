@@ -8,13 +8,15 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import DatePicker from "react-datepicker";
 import Header from "../components/Header";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function TravelBudgetInputPage() {
   const [showResult, setShowResult] = useState(false);
-
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   // 💰 더미 예산 데이터
   const dummyBudgetData = {
     labels: ["항공", "숙박", "식비", "교통", "기타"],
@@ -67,16 +69,35 @@ export default function TravelBudgetInputPage() {
             여행 정보 입력
           </h2>
 
-          {/* 목적지 선택 */}
           <div className="mb-4">
             <p className="text-sm text-gray-700 mb-1">
-              목적지 선택{" "}
+              출발지 선택{" "}
               <span className="text-red-500">
                 (예시입니다. 실제로는 더 많을 예정)
               </span>
             </p>
             <div className="flex flex-wrap gap-2">
-              {["강원", "경남", "식사", "익선동", "경북궁"].map((region) => (
+              {["강원", "경남", "서울", "부산"].map((region) => (
+                <button
+                  key={region}
+                  className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
+                >
+                  {region}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 도착지 선택 */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-700 mb-1">
+              도착지 선택{" "}
+              <span className="text-red-500">
+                (예시입니다. 실제로는 더 많을 예정)
+              </span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["서울", "경남", "제주도", "울산"].map((region) => (
                 <button
                   key={region}
                   className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200"
@@ -102,15 +123,37 @@ export default function TravelBudgetInputPage() {
             </div>
           </div>
 
-          {/* 여행 기간 */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700">
-              여행 기간 (출발일 ~ 도착일)
-            </label>
-            <input
-              type="date"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
+          <div className="bg-gray-50 rounded-xl p-6 mb-10">
+            <h2 className="text-lg font-semibold mb-4">여행 기간</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex flex-col">
+                <label className="mb-1 font-medium">여행 시작일</label>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  selectStart
+                  startDate={startDate}
+                  endDate={endDate}
+                  placeholderText="시작일 선택"
+                  dateFormat="yyyy-MM-dd"
+                  className="border border-gray-300 rounded px-4 py-2"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="mb-1 font-medium">여행 종료일</label>
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  selectsEnd
+                  startDate={startDate}
+                  endDate={endDate}
+                  placeholderText="종료일 선택"
+                  dateFormat="yyyy-MM-dd"
+                  className="border border-gray-300 rounded px-4 py-2"
+                />
+              </div>
+            </div>
           </div>
 
           {/* 버튼 */}
