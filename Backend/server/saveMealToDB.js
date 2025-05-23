@@ -1,5 +1,5 @@
-// saveMealToDB.js
 const pool = require('./db');
+const saveMealReviewsToDB = require('./saveMealReviewsToDB'); //리뷰는 리뷰디비로
 
 async function saveMealToDB(place) {
   const client = await pool.connect();
@@ -9,12 +9,12 @@ async function saveMealToDB(place) {
         name, location, rating, review_count, price_level, image_url,
         style_date, style_business, style_anniversary, style_team, style_family,
         style_view, style_meeting, style_quiet, style_modern, style_traditional,
-        opening_hours, phone_number, place_id, created_at
+        opening_hours, phone_number, place_id, created_at, food_type, area, opening_periods
     )
     VALUES ($1, $2, $3, $4, $5, $6,
             $7, $8, $9, $10, $11,
             $12, $13, $14, $15, $16,
-            $17, $18, $19, $20)
+            $17, $18, $19, $20, $21, $22, $23)
     ON CONFLICT (name, location) DO NOTHING;
 `;
 
@@ -37,18 +37,23 @@ const values = [
   place.style_traditional,
   place.opening_hours,
   place.phone_number,
-  place.place_id,     // 19번째 (place_id)
-  place.created_at
+  place.place_id,    
+  place.created_at,
+  place.food_type,
+  place.area,
+  place.opening_periods
 ];
 
 
     await client.query(query, values);
     console.log(`✅ 저장 성공: ${place.name}`);
+    if (place.reviews) {
+      await saveMealReviewsToDB(place.place_id, place.reviews);
+    }
   } catch (err) {
     console.error(`❌ 저장 실패: ${place.name} -`, err.message);
   } finally {
     client.release();
   }
 }
-
 module.exports = saveMealToDB;
