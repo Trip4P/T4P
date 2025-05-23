@@ -1,24 +1,55 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import GoogleMapView from "../components/GoogleMapView";
 
 export default function RestaurantRecommendationPage() {
   const navigate = useNavigate();
 
+  const places = [
+    {
+      name: "경복궁",
+      lat: 37.579617,
+      lng: 126.977041,
+      description: "조선의 정궁, 전통과 아름다움의 상징",
+    },
+    {
+      name: "북촌한옥마을",
+      lat: 37.582604,
+      lng: 126.983998,
+      description: "한옥의 고즈넉함과 인생샷 스팟!",
+    },
+    {
+      name: "광장시장 육회골목",
+      lat: 37.570376,
+      lng: 126.999076,
+      description: "서울 3대 육회, 광장시장 필수코스",
+    },
+    {
+      name: "N서울타워",
+      lat: 37.551169,
+      lng: 126.988227,
+      description: "서울 전경 한눈에, 야경 명소!",
+    },
+    {
+      name: "카페 온더플레이트",
+      lat: 37.545226,
+      lng: 127.004885,
+      description: "한강뷰 감성카페 ☕️🌉",
+    },
+  ];
+
   return (
     <>
       <Header />
+
       <div className="min-h-screen bg-gradient-to-b from-blue-100 to-blue-300 p-4">
-        <header className="flex justify-between items-center mb-6">
-          {/* <button className="text-blue-700 font-semibold">← 일정으로 돌아가기</button> */}
-          <h1 className="text-blue-900 text-lg font-bold">Day 2 / 점심 추천</h1>
-          {/* <span className="text-blue-700 text-sm">2025.05.13 / 12:30 PM</span> */}
-        </header>
+        <div className="text-xl text-blue-800 font-medium">맛집 리스트</div>
 
         {/* AI 추천 카드 */}
         <div className="bg-white shadow-md rounded-xl p-4 mb-6">
           <div className="text-sm text-blue-800 font-medium">
-            TripMate AI의 추천!
+            거기 어때 AI의 추천!
           </div>
           <p className="text-blue-700 mt-1">
             해산물 좋아하신다면 해운대 "청초횟집"을 추천드려요. 현지인 리뷰가
@@ -29,7 +60,7 @@ export default function RestaurantRecommendationPage() {
         {/* 추천 맛집 카드 */}
         <div className="bg-white shadow-md rounded-xl p-4 mb-6">
           <div className="flex gap-4">
-            <div className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400">
+            <div className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400 rounded-lg">
               음식 이미지
             </div>
             <div className="flex-1">
@@ -52,56 +83,37 @@ export default function RestaurantRecommendationPage() {
                 신선한 해산물과 함께 즐기는 오션뷰. 현지인들에게 인기 있는
                 맛집입니다.
               </p>
-              <div className="mt-3 space-x-2">
+
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
+                  2만원대
+                </span>
                 <button
                   onClick={() => navigate("/RestaurantDetail")}
                   className="bg-blue-600 text-white text-sm px-3 py-1 rounded-lg hover:bg-blue-700"
                 >
                   상세보기
                 </button>
-                <button className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-lg hover:bg-blue-200">
-                  일정에 추가
-                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 거리 / 가격대 필터 */}
-        <div className="bg-white shadow-md rounded-xl p-4 mb-6">
-          <div className="mb-4">
-            <p className="font-medium text-blue-800">거리</p>
-            <div className="flex gap-2 mt-2">
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                1km 이내
-              </button>
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                3km
-              </button>
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                전체
-              </button>
-            </div>
-          </div>
-          <div>
-            <p className="font-medium text-blue-800">가격대</p>
-            <div className="flex gap-2 mt-2">
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                ₩
-              </button>
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                ₩₩
-              </button>
-              <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200">
-                ₩₩₩
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* 지도 영역 */}
-        <div className="bg-blue-100 rounded-xl h-64 flex items-center justify-center text-blue-400">
-          지도 영역
+        <GoogleMapView places={places} />
+
+        {/* Bottom Buttons */}
+        <div className="flex flex-wrap gap-2 mt-10">
+          <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
+            🔄 다시 추천받기
+          </button>
+          <button
+            onClick={() => navigate("/TravelStyleForm")}
+            className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
+          >
+            성향 입력 다시하기
+          </button>
+          {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
     </>
