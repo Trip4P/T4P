@@ -113,7 +113,7 @@ export default function MainPage() {
       <footer className="bg-gray-100 text-sm text-gray-600 px-8 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
-            <div className="font-bold text-blue-600 mb-1">TripMate AI</div>
+            <div className="font-bold text-blue-600 mb-1">거기 어때 AI</div>
             <p>AI 기술로 당신의 완벽한 여행을 설계해드립니다.</p>
           </div>
           <div className="mt-4 md:mt-0">

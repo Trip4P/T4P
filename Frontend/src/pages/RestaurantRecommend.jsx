@@ -6,6 +6,39 @@ import GoogleMapView from "../components/GoogleMapView";
 export default function RestaurantRecommendationPage() {
   const navigate = useNavigate();
 
+  const places = [
+    {
+      name: "경복궁",
+      lat: 37.579617,
+      lng: 126.977041,
+      description: "조선의 정궁, 전통과 아름다움의 상징",
+    },
+    {
+      name: "북촌한옥마을",
+      lat: 37.582604,
+      lng: 126.983998,
+      description: "한옥의 고즈넉함과 인생샷 스팟!",
+    },
+    {
+      name: "광장시장 육회골목",
+      lat: 37.570376,
+      lng: 126.999076,
+      description: "서울 3대 육회, 광장시장 필수코스",
+    },
+    {
+      name: "N서울타워",
+      lat: 37.551169,
+      lng: 126.988227,
+      description: "서울 전경 한눈에, 야경 명소!",
+    },
+    {
+      name: "카페 온더플레이트",
+      lat: 37.545226,
+      lng: 127.004885,
+      description: "한강뷰 감성카페 ☕️🌉",
+    },
+  ];
+
   return (
     <>
       <Header />
@@ -67,7 +100,21 @@ export default function RestaurantRecommendationPage() {
         </div>
 
         {/* 지도 영역 */}
-        <GoogleMapView />
+        <GoogleMapView places={places} />
+
+        {/* Bottom Buttons */}
+        <div className="flex flex-wrap gap-2 mt-10">
+          <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
+            🔄 다시 추천받기
+          </button>
+          <button
+            onClick={() => navigate("/TravelStyleForm")}
+            className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
+          >
+            성향 입력 다시하기
+          </button>
+          {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
+        </div>
       </div>
     </>
   );

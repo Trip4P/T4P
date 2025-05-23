@@ -2,7 +2,9 @@ import { Link } from "react-router-dom";
 const Header = () => {
   return (
     <header className="flex justify-between items-center px-8 py-4 shadow">
-      <div className="text-xl font-bold text-blue-600">T4P</div>
+      <Link to="/" className="text-xl font-bold text-blue-600">
+        거기 어때
+      </Link>
       <nav className="flex gap-6 text-sm">
         <Link to="/" className="hover:text-blue-600">
           홈
