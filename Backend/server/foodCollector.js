@@ -1,12 +1,14 @@
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const axios = require('axios');
 const fs = require('fs');
-const pLimit = require('p-limit');
+const pLimit = require('p-limit').default;
 const saveMealToDB = require('./saveMealToDB');
 
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 const GU_LIST = [
-  "강남"
+"강남", "강동", "강북", "강서", "관악", "광진", "구로", "금천", "노원",
+"도봉", "동대문", "동작", "마포", "서대문", "서초", "성동", "성북",
+"송파", "양천", "영등포", "용산", "은평", "종로", "중구", "중랑"
 ];
 
 // 10가지 스타일 배열
@@ -27,9 +29,10 @@ const STYLES = [
 const queries = [];
 for (const gu of GU_LIST) {
   for (const style of STYLES) {
-    queries.push(`서울 ${gu} ${style} 맛집`);
+    queries.push({ query: `서울 ${gu} ${style} 맛집`, area: `서울 ${gu}구` });
   }
 }
+
 
 function analyzeStyles(place, detail) {
   const keywords = [
@@ -55,15 +58,26 @@ function analyzeStyles(place, detail) {
 async function searchPlacesWithPagination(query) {
   let results = [];
   let nextPageToken = null;
+  let page = 1;
 
   do {
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${API_KEY}&language=ko${nextPageToken ? `&pagetoken=${nextPageToken}` : ''}`;
     const response = await axios.get(url);
-    results = results.concat(response.data.results);
+    console.log(`📄 [${query}] Page ${page} 응답 상태:`, response.data.status);
+    console.log(`🔢 [${query}] Page ${page} 결과 수:`, response.data.results?.length || 0);
 
+    if (response.data.status !== 'OK' && response.data.status !== 'ZERO_RESULTS') {
+      console.warn(`⚠️ API 오류 발생: ${response.data.status}`);
+      break;
+    }
+
+    results = results.concat(response.data.results || []);
     nextPageToken = response.data.next_page_token;
+
     if (nextPageToken) {
-      await new Promise(res => setTimeout(res, 2000));
+      console.log(`⏳ 다음 페이지 토큰 있음 → 대기 중...`);
+      await new Promise(res => setTimeout(res, 3000)); // 3초로 증가
+      page++;
     }
   } while (nextPageToken);
 
@@ -74,6 +88,11 @@ async function getPlaceDetails(placeId) {
   const fields = 'name,rating,formatted_address,user_ratings_total,price_level,reviews,photos,opening_hours,formatted_phone_number';
   const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${API_KEY}&language=ko`;
   const response = await axios.get(url);
+
+  if (!response.data || !response.data.result) {
+    console.warn(`⚠️ Place detail 결과 없음: ${placeId}`);
+  }
+
   return response.data.result;
 }
 
@@ -82,22 +101,47 @@ function getPhotoUrl(photoReference) {
   if (!photoReference) return null;
   return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${photoReference}&key=${API_KEY}`;
 }
-
+console.log(API_KEY);
 (async () => {
   try {
     let allPlaces = [];
 
-    for (const query of queries) {
-      console.log(`▶ 검색 중: ${query}`);
-      const places = await searchPlacesWithPagination(query);
-      allPlaces.push(...places);
-    }
+for (const { query, area } of queries) {
+  console.log(`▶ 검색 중: ${query}`);
+  const places = await searchPlacesWithPagination(query);
+  allPlaces.push(...places.map(p => ({ ...p, area }))); // ✅ area 포함
+}
+
 
     const uniquePlaces = Array.from(new Map(allPlaces.map(p => [p.place_id, p])).values());
     console.log(`🔍 총 수집된 유니크 장소 수: ${uniquePlaces.length}`);
+    console.log("✅ 환경 변수 불러오기 테스트:", process.env.GOOGLE_PLACES_API_KEY);
 
     const limit = pLimit(5);
     const finalResults = [];
+
+
+function classifyFoodType(text) {
+  const lower = text.toLowerCase();
+
+  const keywordGroups = [
+    { type: '일식', keywords: ['스시', '초밥', '오마카세', '일식', '사시미', '돈카츠', '라멘', '우동'] },
+    { type: '한식', keywords: ['비빔밥', '불고기', '된장', '한식', '한우', '한정식', '백반', '육회', '김치'] },
+    { type: '중식', keywords: ['짜장면', '짬뽕', '탕수육', '중식', '마라', '딤섬', '중화요리'] },
+    { type: '양식', keywords: ['스테이크', '파스타', '피자', '버거', '샐러드', '양식', '그릴'] },
+    { type: '동남아식', keywords: ['쌀국수', '팟타이', '나시고렝', '태국', '베트남', '반미', '카오팟'] }
+  ];
+
+  for (const group of keywordGroups) {
+    for (const keyword of group.keywords) {
+      if (lower.includes(keyword)) return group.type;
+    }
+  }
+
+  return '기타'; // 또는 null
+}
+    // 음식 종류 분류
+
 
     const detailPromises = uniquePlaces.map(place =>
       limit(async () => {
@@ -108,6 +152,20 @@ function getPhotoUrl(photoReference) {
             console.log(`🚫 저장 건너뜀 (price_level 없음 또는 1 미만): ${detail.name}`);
             return;
           }
+          
+          const imageUrl = getPhotoUrl(detail.photos?.[0]?.photo_reference);
+if (!imageUrl) {
+  console.log(`🚫 저장 건너뜀 (이미지 없음): ${detail.name}`);
+  return;
+}
+
+          const combinedText = [
+  place.name,
+  detail.formatted_address,
+  ...(detail.reviews?.map(r => r.text) || [])
+].join(' ');
+
+const food_type = classifyFoodType(combinedText); // 아까 만든 함수
 
           // 스타일 분류
           const styles = analyzeStyles(place, detail);
@@ -123,7 +181,11 @@ function getPhotoUrl(photoReference) {
             ...styles,
             opening_hours: detail.opening_hours?.weekday_text?.join('\n') || null,
             phone_number: detail.formatted_phone_number || null,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            reviews: detail.reviews || [],
+            food_type,
+            area: place.area,
+            opening_periods: detail.opening_hours?.periods ? JSON.stringify(detail.opening_hours.periods) : null,          
           };
 
 
