@@ -10,7 +10,7 @@ const Header = () => {
         <Link to="/TravelStyleForm" className="hover:text-blue-600">
           여행 플래너
         </Link>
-        <Link to="/HotPlaceInput" className="hover:text-blue-600">
+        <Link to="/RestaurantInput" className="hover:text-blue-600">
           맛집 추천
         </Link>
         <Link to="/BudgetInput" className="hover:text-blue-600">
