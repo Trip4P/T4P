@@ -21,8 +21,8 @@ class Schedule(Base):
     end_city = Column(String)
     start_date = Column(String)
     end_date = Column(String)
-    emotions = Column(String)
-    companions = Column(String)
+    emotions = Column(String)       # DB에는 문자열 저장. Pydantic 스키마에서 리스트 변환 처리
+    companions = Column(String)     # 동일
     schedule_json = Column(Text)
 
     owner = relationship("User", back_populates="schedules")
