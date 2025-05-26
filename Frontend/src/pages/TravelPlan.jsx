@@ -1,14 +1,19 @@
-import React, { useState } from "react";
-// import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import GoogleMapView from "../components/GoogleMapView";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
-  const [activeDay, setActiveDay] = useState("DAY 1");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [aiEmpathy, setAiEmpathy] = useState("");
+  const [tags, setTags] = useState([]);
+  const [plans, setPlans] = useState([]);
+  const [activeDay, setActiveDay] = useState(1);
 
-  const days = ["DAY 1", "DAY 2", "DAY 3"];
+  // const days = ["DAY 1", "DAY 2", "DAY 3"];
 
   const places = [
     {
@@ -43,6 +48,22 @@ export default function TravelPlan() {
     },
   ];
 
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await axios.get("/api/travel-plan");
+        setStartDate(res.data.startDate);
+        setEndDate(res.data.endDate);
+        setAiEmpathy(res.data.aiEmpathy);
+        setTags(res.data.tags);
+        setPlans(res.data.plans);
+      } catch (err) {
+        console.error("에러 발생", err);
+      }
+    }
+
+    fetchData();
+  }, []);
 
   return (
     <>
@@ -52,15 +73,15 @@ export default function TravelPlan() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">부산 여행 일정</h1>
           <p className="text-sm text-blue-600">
-            📅 2025.05.13 ~ 2025.05.15 (2박 3일)
+            `📅 {startDate} ~ {endDate}`
           </p>
           <div className="mt-2 space-x-2">
-            {["#미식", "#감성", "#바다", "#여유"].map((tag) => (
+            {tags.map((tag) => (
               <span
                 key={tag}
                 className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full"
               >
-                {tag}
+                `#{tag}`
               </span>
             ))}
           </div>
@@ -70,49 +91,41 @@ export default function TravelPlan() {
         <div className="flex items-start bg-blue-100 p-4 rounded-lg mb-6">
           <div className="mr-3 text-2xl">AI 코멘트</div>
           <p className="text-sm">
-            여유롭고 감성적인 여행을 원하셨죠? 감성 카페와 현지인 맛집 위주로
-            구성했어요!
+            {aiEmpathy || "로딩 중이거나 기본 AI 코멘트"}
           </p>
         </div>
 
         {/* Day Selector */}
         <div className="flex space-x-2 mb-4">
-          {days.map((day) => (
+          {plans.map((plan) => (
             <button
-              key={day}
-              onClick={() => setActiveDay(day)}
+              key={plan.day}
+              onClick={() => setActiveDay(plan.day)}
               className={`px-4 py-2 rounded-lg font-medium border ${
-                activeDay === day
+                activeDay === plan.day
                   ? "bg-blue-700 text-white"
                   : "bg-white text-blue-700 border-blue-400"
               }`}
             >
-              {day}{" "}
-              <span className="text-xs ml-1">
-                {day === "DAY 1"
-                  ? "05.13"
-                  : day === "DAY 2"
-                  ? "05.14"
-                  : "05.15"}
-              </span>
+              {" "}
+              <span className="text-xs ml-1">{plan.day}</span>
             </button>
           ))}
         </div>
 
         {/* Schedule */}
-        {activeDay === "DAY 1" && (
-          <div className="space-y-6">
-            <div className="bg-white p-4 rounded-lg shadow">
+        {plans
+          .find((plan) => plan.day === activeDay)
+          ?.schedule.map((item, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-blue-700 font-semibold">09:00</span>
+                <span className="text-blue-700 font-semibold">{item.time}</span>
                 <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
-                  체크인
+                  {item.placeType}
                 </span>
               </div>
-              <h3 className="text-lg font-bold">호텔 부산</h3>
-              <p className="text-sm text-blue-700">
-                오션뷰 객실에서 여유로운 시작
-              </p>
+              <h3 className="text-lg font-bold">{item.place}</h3>
+              <p className="text-sm text-blue-700">{item.aiComment}</p>
               <div className="mt-2 flex space-x-2 text-xs">
                 <button className="bg-blue-200 text-blue-800 px-2 py-1 rounded">
                   상세정보
@@ -122,31 +135,7 @@ export default function TravelPlan() {
                 </button>
               </div>
             </div>
-
-            <div className="bg-white p-4 rounded-lg shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-blue-700 font-semibold">12:00</span>
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
-                  점심
-                </span>
-              </div>
-              <h3 className="text-lg font-bold">청춘횟집</h3>
-              <p className="text-sm text-blue-700">
-                현지인이 추천하는 신선한 회와 물회
-              </p>
-              <div className="mt-2 space-x-2">
-                {["#미식", "#현지맛집"].map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+          ))}
 
         <div className="google-map">
           <h2>동선 추천</h2>
