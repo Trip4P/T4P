@@ -15,14 +15,14 @@ class User(Base):
 class Schedule(Base):
     __tablename__ = "schedules"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     start_city = Column(String)
     end_city = Column(String)
     start_date = Column(String)
     end_date = Column(String)
-    emotions = Column(String)       # DB에는 문자열 저장. Pydantic 스키마에서 리스트 변환 처리
-    companions = Column(String)     # 동일
+    emotions = Column(String)       # 문자열 JSON 저장
+    companions = Column(String)     # 문자열 JSON 저장
     schedule_json = Column(Text)
 
     owner = relationship("User", back_populates="schedules")

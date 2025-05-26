@@ -20,28 +20,26 @@ def recommend_schedule(
             end_city=schedule.endCity,
             start_date=schedule.startDate,
             end_date=schedule.endDate,
-            emotions=schedule.userEmotion,
-            companions=schedule.with_,
+            emotions=schedule.emotions,
+            companions=schedule.companions or [],
         )
+
+        # ai_response가 dict라면 str로 변환
+        if not isinstance(ai_response, str):
+            ai_response_str = json.dumps(ai_response, ensure_ascii=False)
+        else:
+            ai_response_str = ai_response
+
+        # schedule_json 필드에 AI 응답 문자열 저장
+        schedule.schedule_json = ai_response_str
+
+        new_schedule = crud.create_schedule(db, schedule, current_user.id)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI 호출 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"AI 호출 실패 또는 저장 실패: {str(e)}")
 
-    new_schedule = crud.create_schedule(
-        db,
-        schemas.ScheduleCreate(
-            startCity=schedule.startCity,
-            endCity=schedule.endCity,
-            startDate=schedule.startDate,
-            endDate=schedule.endDate,
-            userEmotion=schedule.userEmotion,
-            with_=schedule.with_,
-            schedule_json=ai_response,
-        ),
-        current_user.id,
-    )
-
-    # schedule_json 문자열을 파싱해서 PlaceInfo 리스트 딕셔너리로 변환
     schedule_dict_raw = json.loads(new_schedule.schedule_json)
+
     schedule_dict = {
         day: [schemas.PlaceInfo(**place) for place in places]
         for day, places in schedule_dict_raw.items()

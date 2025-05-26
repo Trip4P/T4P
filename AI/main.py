@@ -2,8 +2,16 @@ from fastapi import FastAPI
 from routers import auth_router, schedule_router, ai_router
 from database import init_db
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup 시 실행할 코드
+    init_db()
+    yield
+    # shutdown 시 실행할 코드 (필요하면 여기에 추가)
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router.router)
 app.include_router(schedule_router.router)
@@ -16,10 +24,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def startup():
-    init_db()
 
 @app.get("/")
 def root():
