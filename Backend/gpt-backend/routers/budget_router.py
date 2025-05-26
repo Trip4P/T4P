@@ -1,28 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException
-from auth import get_current_user
 from sqlalchemy.orm import Session
 from database import get_db
-import crud, services, schemas
-import json
+import services, schemas, crud
+from models import Budget
 
-router = APIRouter(prefix="/budget", tags=["budget"])
+router = APIRouter(prefix="/api/schedules", tags=["budgets"])
 
-@router.post("/{schedule_id}", response_model=schemas.BudgetResponse)
-def generate_budget(schedule_id: int, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
-    schedule = crud.get_schedule(db, schedule_id, current_user.id)
-    if not schedule:
-        raise HTTPException(status_code=404, detail="Schedule not found")
-
+@router.get("/budgets/{schedule_id}", response_model=schemas.PlanBudgetResponse)
+def calculate_budget_by_schedule_id(schedule_id: int, db: Session = Depends(get_db)):
     try:
-        plan_json = json.loads(schedule.schedule_json)
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid schedule JSON")
+        budget_result = services.calculate_total_budget_from_schedule_id(db, schedule_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
-    num_people = 1 # 임시로 1명으로 설정
+    saved_budget = services.save_budget(db, schedule_id, budget_result)
 
-    food_cost = services.calculate_food_cost(db, plan_json, num_people=num_people)
-    entry_fees = services.estimate_entry_fees(db, plan_json)
-    transport_cost = services.calculate_transport_cost(db, plan_json)
-
-    budget = crud.create_budget(db, schedule_id, food_cost, entry_fees, transport_cost)
-    return budget
+    return {
+        "totalBudget": budget_result["total_cost"],
+        "categoryBreakdown": {
+            "교통": budget_result["transport_cost"],
+            "식비": budget_result["food_cost"],
+            "관광": budget_result["entry_fees"],
+        },
+        "aiComment": budget_result["comment"]
+    }

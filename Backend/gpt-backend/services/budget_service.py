@@ -2,12 +2,13 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from app_config import settings
+
 from typing import List, Dict
 import math
 import json
 from sqlalchemy.orm import Session
 from openai import OpenAI
-from config import settings
 import models
 from models import Schedule, Budget
 from datetime import datetime
@@ -77,7 +78,10 @@ def calculate_food_cost(db: Session, plan_json: dict, num_people: int = 1) -> in
     return total_cost
 
 def ask_gpt_for_entry_fee(place_name: str) -> int:
-    prompt = f"'{place_name}'에 입장료가 있다면 대략 얼마일지 추정해줘. (한국 원화 기준으로 숫자만 답변해줘)"
+    # 장소명 길이가 너무 길면 핵심 단어만 추출 (예시: 앞 20자만)
+    short_name = place_name[:20]
+
+    prompt = f"'{short_name}'의 평균 입장료(또는 체험 비용)를 한국 원화로 알려줘. 숫자만 단위 없이 정수 형태로 응답해줘. 예: 15000"
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -88,20 +92,29 @@ def ask_gpt_for_entry_fee(place_name: str) -> int:
             max_tokens=10,
             temperature=0.3,
         )
-        fee = int(response.choices[0].message.content.strip())
-    except Exception:
+        response_text = response.choices[0].message.content.strip()
+        print(f"GPT 응답: {response_text}")
+        fee = int(response_text)
+    except Exception as e:
+        print(f"입장료 추출 실패: {e}")
         fee = 0
     return fee
 
-def estimate_entry_fees(db: Session, plan_json: dict) -> int:
+
+def estimate_entry_fees(db: Session, plan_json: dict, num_people: int = 1) -> int:
     total_fee = 0
     for day, schedule in plan_json.items():
         for item in schedule:
             destination = db.query(models.Destination).filter(models.Destination.place_id == item['place_id']).first()
             if destination:
+                print(f"Entry fee 문의 장소명: {destination.name}")
                 fee = ask_gpt_for_entry_fee(destination.name)
-                total_fee += fee
+                print(f"받은 입장료(1인): {fee}")
+                total_fee += fee * num_people 
+            else:
+                print(f"Destination 없음 place_id: {item['place_id']}")
     return total_fee
+
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371
@@ -145,20 +158,28 @@ def calculate_transport_cost(db: Session, plan_json: dict, num_people: int = 1) 
 def ask_gpt_budget_comment(user_budget: int, region_names: List[str], days: int = 2, num_people: int = 1) -> str:
     region_str = ", ".join(region_names)
     prompt = f"""
-    사용자가 {region_str} 지역을 {days}일 동안 {num_people}명이 여행할 예정이에요.
-    총 예산은 {user_budget}원이에요.
-    해당 지역의 평균 여행 비용과 비교해서 이 예산이 충분한지, 부족한지 판단해주고,
-    친절한 말투로 짧은 코멘트를 작성해줘.
-    """
+{region_str} 지역을 {days}일 동안 {num_people}명이 여행하는 일정이에요.
+추천된 여행 코스를 기준으로 예상 여행 비용은 총 {user_budget}원이에요.
+
+이 금액이 해당 지역(예: 서울시가 아닌 {region_str} 같은 행정구 기준)의 평균 여행 비용과 비교해서
+비싸 보이는지, 적당한지, 저렴해 보이는지를 짧게 감성적으로 평가해줘. 그 해당 지역의 평균 여행 비용도 언급해줘.
+
+👉 "~같아요", "~일 것 같아요", "~하면 좋겠어요"처럼 부드러운 말투로.
+👉 MZ세대 감성 이모지를 센스 있게 활용해줘.
+👉 설명하지 말고, 친구에게 말하듯 자연스럽고 공감되는 한두 문장으로만 말해줘.
+예: "살짝 비싸지만 그만한 가치가 있을 것 같아요 ✨", "가성비 최고 코스예요! 😎👍"
+👉 비용 느낌뿐 아니라, '왜 그렇게 느껴질 수 있는지'를 센스 있게 살짝 덧붙여줘.
+"""
+
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "당신은  예산 분석 전문가입니다."},
+                {"role": "system", "content": "너는 센스 있는 감성 여행 가이드야. 감성적인 코멘트를 친구에게 말하듯 써줘."},
                 {"role": "user", "content": prompt}
             ],
             max_tokens=500,
-            temperature=0.5
+            temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -175,32 +196,28 @@ def calculate_total_budget_from_schedule_id(db: Session, schedule_id: int) -> di
     except Exception as e:
         raise ValueError(f"schedule_json 파싱 실패: {e}")
 
-    num_people = schedule.num_people or 1  # ← 여기서 사용자 수 적용
-
-    # 이하 생략 (계산 로직 동일)
-
+    num_people = schedule.num_people or 1  # 여기서 사용자 수 받아옴
 
     food_cost = calculate_food_cost(db, plan_json, num_people)
-    entry_fees = estimate_entry_fees(db, plan_json)
+    entry_fees = estimate_entry_fees(db, plan_json, num_people)
     transport_cost = calculate_transport_cost(db, plan_json, num_people=num_people)
     total_cost = food_cost + entry_fees + transport_cost
 
+
     region_names = []
+    seen = set()
     for day in plan_json.values():
         for item in day:
-            place = db.query(models.Destination).filter(models.Destination.place_id == item["place_id"]).first()
-            if not place:
-                place = db.query(models.Meal).filter(models.Meal.place_id == item["place_id"]).first()
+            place = (
+                db.query(models.Destination).filter(models.Destination.place_id == item["place_id"]).first()
+                or db.query(models.Meal).filter(models.Meal.place_id == item["place_id"]).first()
+            )
+            area = getattr(place, "area", None)
+            if area and area not in seen:
+                region_names.append(area)
+                seen.add(area)
 
-            loc = getattr(place, "location", None)
-            if loc:
-            # loc 예: "서울 종로구 삼청동" -> "서울 종로구"까지만 자르기
-            # 구 단위까지만 추출 (앞에서 두 단어까지)
-                region = ' '.join(loc.split()[:2])
-                if region not in region_names:
-                    region_names.append(region)
-
-
+    
     budget_comment = ask_gpt_budget_comment(total_cost, region_names, days=len(plan_json), num_people=num_people)
 
     return {
@@ -220,4 +237,4 @@ if __name__ == "__main__":
     print(json.dumps(budget, ensure_ascii=False, indent=2))
 
     saved_budget = save_budget(db, schedule_id, budget)
-    print(f"Budget 저장 완료, id: {saved_budget.id}, comment: {saved_budget.comment}")
+    print(f"Budget 저장 완료, id: {saved_budget.id}")

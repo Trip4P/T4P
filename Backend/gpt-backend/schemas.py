@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 
 class UserCreate(BaseModel):
@@ -70,5 +70,26 @@ class BudgetResponse(BaseModel):
     class Config:
         orm_mode = True  #Pydantic 모델로 변환
 
+#예산요청 스키마 추가
+class ScheduleItem(BaseModel):
+    place_id: str  
+    time: Optional[str] = None
+    placeType: Optional[str] = None
+    place: Optional[str] = None  
+
+class PlanBudgetRequest(BaseModel):
+    plans: Dict[str, List[ScheduleItem]]
+
+class CategoryBreakdown(BaseModel):
+    교통: int
+    숙박: int
+    식비: int
+    관광: int
+    기타: int
+
+class PlanBudgetResponse(BaseModel):
+    totalBudget: int
+    categoryBreakdown: CategoryBreakdown
+    aiComment: str
 
         
