@@ -26,7 +26,7 @@ class Schedule(Base):
     emotions = Column(String)
     companions = Column(String)
     schedule_json = Column(Text)
-
+    num_people = Column(Integer)
     owner = relationship("User", back_populates="schedules")
 
 class Destination(Base):
@@ -53,8 +53,8 @@ class Destination(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     place_id = Column(String, unique=True, index=True)
     opening_periods = Column(JSON)
-    # latitude = Column(Float)
-    # longitude = Column(Float)
+    latitude = Column(Float)
+    longitude = Column(Float)
 
 class Meal(Base):
     __tablename__ = 'meals'
@@ -82,11 +82,11 @@ class Meal(Base):
     place_id = Column(String, unique=True, index=True)
     area = Column(Text)
     opening_periods = Column(JSON)
-    # latitude = Column(Float)
-    # longitude = Column(Float) 추후추가...
+    latitude = Column(Float)
+    longitude = Column(Float)
 
 class Budget(Base):
-    __tablename__ = 'budgets'
+    __tablename__ = 'budget'
     id = Column(Integer, primary_key=True, index=True)
     schedule_id = Column(Integer, ForeignKey("schedules.id"))
     food_cost = Column(Integer)
@@ -94,3 +94,5 @@ class Budget(Base):
     entry_fees = Column(Integer)
     total_budget = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow)
+    comment = Column(String, nullable=True)
+
