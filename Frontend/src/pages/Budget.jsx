@@ -1,6 +1,6 @@
-import React from "react";
 import { Doughnut } from "react-chartjs-2";
 // import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import Header from "../components/Header";
 
@@ -25,6 +25,17 @@ const BudgetResultPage = () => {
     ],
   };
 
+  const [destination, setDestination] = useState("");
+  const [dateRange, setDateRange] = useState("");
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("travelStyle"));
+    if (stored) {
+      setDestination(stored.destination || "");
+      setDateRange(`${stored.startDate} ~ ${stored.endDate}`);
+    }
+  }, []);
+
   // const navigate = useNavigate();
 
   return (
@@ -45,13 +56,11 @@ const BudgetResultPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">목적지</p>
-                <p className="font-semibold">서울</p>
+                <p className="font-semibold">{destination}</p>
               </div>
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">여행일</p>
-                <p className="font-semibold">
-                  2025.05.13 ~ 2025.05.15 (2박 3일)
-                </p>
+                <p className="font-semibold">{dateRange}</p>
               </div>
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">인원</p>
