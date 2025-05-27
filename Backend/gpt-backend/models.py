@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, JSON, ForeignKey, Date
 
 from sqlalchemy.orm import relationship
 from database import Base
@@ -96,3 +96,23 @@ class Budget(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     comment = Column(String, nullable=True)
 
+class QuickBudget(Base):
+    __tablename__ = 'quick_budget'  # 다른 테이블 이름으로 설정
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # 사용자가 입력한 여행 정보
+    start_city = Column(String)
+    end_city = Column(String)
+    start_date = Column(Date)
+    end_date = Column(Date)
+    num_people = Column(Integer)
+
+    # 예산 결과
+    food_cost = Column(Integer)
+    transport_cost = Column(Integer)
+    entry_fees = Column(Integer)
+    total_budget = Column(Integer)
+    comment = Column(String)
+
+    created_at = Column(DateTime, default=datetime.utcnow)

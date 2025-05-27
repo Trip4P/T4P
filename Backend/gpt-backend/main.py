@@ -3,12 +3,14 @@ from routers import auth_router, schedule_router
 from database import init_db
 from fastapi.middleware.cors import CORSMiddleware
 from routers.budget_router import router as budget_router
+from routers.quick_budget_router import router as quick_budget_router
 
 app = FastAPI()
 
 app.include_router(auth_router.router)
 app.include_router(schedule_router.router)
 app.include_router(budget_router)
+app.include_router(quick_budget_router)
 
 app.add_middleware(
     CORSMiddleware,

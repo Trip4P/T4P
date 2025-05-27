@@ -147,13 +147,26 @@ def calculate_transport_cost(db: Session, plan_json: dict, num_people: int = 1) 
                 continue
 
             dist = haversine(lat1, lon1, lat2, lon2)
+
+            # ✅ 너무 가까우면 계산하지 않음
             if dist < 1.0:
                 continue
 
+            # ✅ 실제 API 먼저 시도
             fare = get_public_transport_fare(lat1, lon1, lat2, lon2)
-            total_cost += fare * num_people  # ✅ 인원 수 반영
-    return total_cost
 
+            # ✅ 실패하거나 0원이면 fallback 요금 추정
+            if fare == 0:
+                if dist < 3:
+                    fare = 1250  # 기본 요금
+                elif dist < 10:
+                    fare = 1800  # 중거리
+                else:
+                    fare = 2500  # 장거리
+
+            total_cost += fare * num_people
+
+    return total_cost
 
 def ask_gpt_budget_comment(user_budget: int, region_names: List[str], days: int = 2, num_people: int = 1) -> str:
     region_str = ", ".join(region_names)
