@@ -12,6 +12,9 @@ export default {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder,
   },
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
   // reporters: [
   //   "default",
   //   ["jest-html-reporter", {

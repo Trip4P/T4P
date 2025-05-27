@@ -52,11 +52,19 @@ export default function TravelPlan() {
     async function fetchData() {
       try {
         const res = await axios.get("/api/travel-plan");
-        setStartDate(res.data.startDate);
-        setEndDate(res.data.endDate);
-        setAiEmpathy(res.data.aiEmpathy);
-        setTags(res.data.tags);
-        setPlans(res.data.plans);
+        const stored = JSON.parse(localStorage.getItem("travelStyle"));
+
+        if (!stored) {
+          console.warn("로컬 스토리지에 사용자 성향 정보 없음");
+          return;
+        }
+
+        setStartDate(stored.startDate);
+        setEndDate(stored.endDate);
+        setTags(res.data.tags || []);
+        setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
+        setPlans(res.data.plans || []);
+
       } catch (err) {
         console.error("에러 발생", err);
       }
@@ -69,11 +77,11 @@ export default function TravelPlan() {
     <>
       <Header />
       <div className="max-w-5xl mx-auto p-6 bg-blue-50 min-h-screen text-blue-900">
-        {/* Header */}
+        {/* 헤더 밑 윗줄 */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-2">부산 여행 일정</h1>
+          <h1 className="text-3xl font-bold mb-2">여행 일정</h1>
           <p className="text-sm text-blue-600">
-            `📅 {startDate} ~ {endDate}`
+            📅 {startDate} ~ {endDate}
           </p>
           <div className="mt-2 space-x-2">
             {tags.map((tag) => (
@@ -87,7 +95,7 @@ export default function TravelPlan() {
           </div>
         </div>
 
-        {/* Tip Box */}
+        {/* AI 코멘트 */}
         <div className="flex items-start bg-blue-100 p-4 rounded-lg mb-6">
           <div className="mr-3 text-2xl">AI 코멘트</div>
           <p className="text-sm">

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import TravelPlan from "../pages/TravelPlan";
 import "@testing-library/jest-dom";
 import axios from "axios";
@@ -7,6 +7,20 @@ import { BrowserRouter } from "react-router-dom";
 jest.mock("axios");
 jest.mock("../components/GoogleMapView", () => {
   return jest.fn(() => <div>Mock Google Map View</div>); // Render a simple div
+});
+
+
+beforeEach(() => {
+  const travelStyle = {
+    startDate: "2025.05.13",
+    endDate: "2025.05.15",
+    departure: "서울역",
+    destination: "부산역",
+    emotion: ["설레는"],
+    companion: ["친구와"],
+    peopleCount: 2,
+  };
+  localStorage.setItem("travelStyle", JSON.stringify(travelStyle));
 });
 
 const mockApiResponse = {
@@ -36,6 +50,25 @@ const mockApiResponse = {
           },
         ],
       },
+      {
+        day: 2,
+        schedule: [
+          {
+            time: "10:00",
+            placeType: "카페",
+            place: "온더플레이트",
+            placeId: "301",
+            aiComment: "한강 뷰를 즐길 수 있는 감성 카페",
+          },
+          {
+            time: "14:00",
+            placeType: "관광",
+            place: "N서울타워",
+            placeId: "302",
+            aiComment: "서울 전경을 한눈에 볼 수 있는 명소",
+          },
+        ],
+      },
     ],
   },
 };
@@ -52,16 +85,28 @@ describe("TravelPlan Component", () => {
 
     // aiEmpathy 문구 확인
     await waitFor(() =>
-      expect(screen.getByText(/힐링 여행/)).toBeInTheDocument()
+      expect(screen.getByText((content) => content.includes("힐링 여행"))).toBeInTheDocument()
     );
 
     // 일정의 장소명이 화면에 나오는지 확인
     expect(await screen.findByText(/청춘 횟집/)).toBeInTheDocument();
     expect(await screen.findByText(/호텔 부산/)).toBeInTheDocument();
 
+    // 시간 확인
+    expect(await screen.findByText(/09:00/)).toBeInTheDocument();
+
+
+    // Day2로 전환
+    const day2Button = await screen.findByText("2");
+    fireEvent.click(day2Button);
+    expect(await screen.findByText(/온더플레이트/)).toBeInTheDocument();
+
     // 태그가 표시되는지 확인
     const tags = await screen.findAllByText(text => text.includes("미식"));
     expect(tags.length).toBeGreaterThan(0);
-    screen.debug();
+    // screen.debug();
+
+    const stored = JSON.parse(localStorage.getItem("travelStyle"));
+    console.log("stored: ", stored);
   });
 });
