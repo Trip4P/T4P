@@ -82,10 +82,8 @@ class PlanBudgetRequest(BaseModel):
 
 class CategoryBreakdown(BaseModel):
     교통: int
-    숙박: int
     식비: int
     관광: int
-    기타: int
 
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
