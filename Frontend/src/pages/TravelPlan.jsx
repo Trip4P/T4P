@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import GoogleMapView from "../components/GoogleMapView";
+import PlaceDetailPage from "./PlaceDetail";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
@@ -135,7 +136,14 @@ export default function TravelPlan() {
               <h3 className="text-lg font-bold">{item.place}</h3>
               <p className="text-sm text-blue-700">{item.aiComment}</p>
               <div className="mt-2 flex space-x-2 text-xs">
-                <button className="bg-blue-200 text-blue-800 px-2 py-1 rounded">
+                <button
+                  className="bg-blue-200 text-blue-800 px-2 py-1 rounded"
+                  onClick={() =>
+                    navigate("/PlaceDetailPage", {
+                      state: { placeId: item.placeId },
+                    })
+                  }
+                >
                   상세정보
                 </button>
                 <button className="bg-blue-200 text-blue-800 px-2 py-1 rounded">
