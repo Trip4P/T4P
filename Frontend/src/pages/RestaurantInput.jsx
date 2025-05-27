@@ -52,6 +52,8 @@ export default function TasteProfilePage() {
   const [selectedCompanions, setSelectedCompanions] = useState([]);
   const [selectedFoodTypes, setSelectedFoodTypes] = useState([]);
   const [selectedAtmospheres, setSelectedAtmospheres] = useState([]);
+  const [city, setCity] = useState("");
+  const [region, setRegion] = useState("");
 
   return (
     <>
@@ -84,6 +86,28 @@ export default function TasteProfilePage() {
             onChange={setSelectedAtmospheres}
           />
 
+          <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+            <h2 className="text-lg font-semibold text-blue-700 mb-4">여행 도시</h2>
+            <input
+              type="text"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="ex) 서울"
+              className="w-full border border-gray-300 rounded px-4 py-2"
+            />
+          </div>
+
+          <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+            <h2 className="text-lg font-semibold text-blue-700 mb-4">도시 내 지역</h2>
+            <input
+              type="text"
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              placeholder="ex) 해운대"
+              className="w-full border border-gray-300 rounded px-4 py-2"
+            />
+          </div>
+
           <div className="text-center mt-10">
             <button
               onClick={() => {
@@ -91,6 +115,8 @@ export default function TasteProfilePage() {
                   companions: selectedCompanions,
                   foodTypes: selectedFoodTypes,
                   atmospheres: selectedAtmospheres,
+                  city,
+                  region,
                 };
                 localStorage.setItem("tasteProfile", JSON.stringify(tasteProfile));
                 navigate("/RestaurantRecommend");
