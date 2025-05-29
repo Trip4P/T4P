@@ -149,7 +149,7 @@ export default function RestaurantRecommendationPage() {
                 <p className="text-sm text-blue-700 mt-2">{ place.aiFoodComment }</p>
                 <div className="mt-3 flex items-center gap-2 flex-wrap">
                   <button
-                    onClick={() => navigate("/RestaurantDetail")}
+                    onClick={() => navigate(`/RestaurantDetail/${place.placeId}`)}
                     className="bg-blue-600 text-white text-sm px-3 py-1 rounded-lg hover:bg-blue-700">
                       상세보기
                   </button>
