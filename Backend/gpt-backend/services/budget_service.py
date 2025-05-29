@@ -69,12 +69,13 @@ price_map = {
 
 def calculate_food_cost(db: Session, plan_json: dict, num_people: int = 1) -> int:
     total_cost = 0
-    for day, schedule in plan_json.items():
-        for item in schedule:
-            meal = db.query(models.Meal).filter(models.Meal.place_id == item['place_id']).first()
-            if meal:
-                avg_price = price_map.get(meal.price_level, 0)
-                total_cost += avg_price * num_people
+    for day in plan_json.values():
+        for meal_type in ["lunch", "dinner"]:
+            for meal in day.get(meal_type, []):
+                db_meal = db.query(models.Meal).filter(models.Meal.place_id == meal['place_id']).first()
+                if db_meal:
+                    avg_price = price_map.get(db_meal.price_level, 0)
+                    total_cost += avg_price * num_people
     return total_cost
 
 def ask_gpt_for_entry_fee(place_name: str) -> int:
@@ -103,17 +104,14 @@ def ask_gpt_for_entry_fee(place_name: str) -> int:
 
 def estimate_entry_fees(db: Session, plan_json: dict, num_people: int = 1) -> int:
     total_fee = 0
-    for day, schedule in plan_json.items():
-        for item in schedule:
-            destination = db.query(models.Destination).filter(models.Destination.place_id == item['place_id']).first()
+    for day in plan_json.values():
+        for sight in day.get("sights", []):
+            destination = db.query(models.Destination).filter(models.Destination.place_id == sight['place_id']).first()
             if destination:
-                print(f"Entry fee 문의 장소명: {destination.name}")
                 fee = ask_gpt_for_entry_fee(destination.name)
-                print(f"받은 입장료(1인): {fee}")
-                total_fee += fee * num_people 
-            else:
-                print(f"Destination 없음 place_id: {item['place_id']}")
+                total_fee += fee * num_people
     return total_fee
+
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -135,38 +133,64 @@ def get_place_location(db: Session, place_id: str):
 
 def calculate_transport_cost(db: Session, plan_json: dict, num_people: int = 1) -> int:
     total_cost = 0
-    for day, places in plan_json.items():
-        for i in range(len(places) - 1):
-            from_id = places[i]['place_id']
-            to_id = places[i + 1]['place_id']
+    for day in plan_json.values():
+        sights = day.get("sights", [])
+        lunch = day.get("lunch", [])
+        dinner = day.get("dinner", [])
 
-            lat1, lon1 = get_place_location(db, from_id)
-            lat2, lon2 = get_place_location(db, to_id)
+        if len(sights) >= 2 and lunch and dinner:
+            s1, s2 = sights[0], sights[1]
+            l, d = lunch[0], dinner[0]
 
-            if None in (lat1, lon1, lat2, lon2):
-                continue
+            def fare_between(pid1, pid2):
+                lat1, lon1 = get_place_location(db, pid1)
+                lat2, lon2 = get_place_location(db, pid2)
+                if None in (lat1, lon1, lat2, lon2):
+                    return 0
+                dist = haversine(lat1, lon1, lat2, lon2)
+                if dist < 1.0:
+                    return 0
+                fare = get_public_transport_fare(lat1, lon1, lat2, lon2)
+                if fare == 0:
+                    if dist < 3:
+                        fare = 1250
+                    elif dist < 10:
+                        fare = 1800
+                    else:
+                        fare = 2500
+                return fare
 
-            dist = haversine(lat1, lon1, lat2, lon2)
+            route1 = fare_between(s1["place_id"], l["place_id"]) + \
+                     fare_between(l["place_id"], s2["place_id"]) + \
+                     fare_between(s2["place_id"], d["place_id"])
 
-            # ✅ 너무 가까우면 계산하지 않음
-            if dist < 1.0:
-                continue
+            route2 = fare_between(s2["place_id"], l["place_id"]) + \
+                     fare_between(l["place_id"], s1["place_id"]) + \
+                     fare_between(s1["place_id"], d["place_id"])
 
-            # ✅ 실제 API 먼저 시도
-            fare = get_public_transport_fare(lat1, lon1, lat2, lon2)
+            average_fare = (route1 + route2) // 2
+            total_cost += average_fare * num_people
 
-            # ✅ 실패하거나 0원이면 fallback 요금 추정
-            if fare == 0:
-                if dist < 3:
-                    fare = 1250  # 기본 요금
-                elif dist < 10:
-                    fare = 1800  # 중거리
-                else:
-                    fare = 2500  # 장거리
-
-            total_cost += fare * num_people
+        else:
+            # fallback: 연결 가능한 pair마다 계산
+            ordered = sights + lunch + dinner
+            for i in range(len(ordered) - 1):
+                pid1 = ordered[i]['place_id']
+                pid2 = ordered[i + 1]['place_id']
+                lat1, lon1 = get_place_location(db, pid1)
+                lat2, lon2 = get_place_location(db, pid2)
+                if None in (lat1, lon1, lat2, lon2):
+                    continue
+                dist = haversine(lat1, lon1, lat2, lon2)
+                if dist < 1.0:
+                    continue
+                fare = get_public_transport_fare(lat1, lon1, lat2, lon2)
+                if fare == 0:
+                    fare = 1250 if dist < 3 else 1800 if dist < 10 else 2500
+                total_cost += fare * num_people
 
     return total_cost
+
 
 def ask_gpt_budget_comment(user_budget: int, region_names: List[str], days: int = 2, num_people: int = 1) -> str:
     region_str = ", ".join(region_names)
@@ -220,15 +244,16 @@ def calculate_total_budget_from_schedule_id(db: Session, schedule_id: int) -> di
     region_names = []
     seen = set()
     for day in plan_json.values():
-        for item in day:
-            place = (
-                db.query(models.Destination).filter(models.Destination.place_id == item["place_id"]).first()
-                or db.query(models.Meal).filter(models.Meal.place_id == item["place_id"]).first()
-            )
-            area = getattr(place, "area", None)
-            if area and area not in seen:
-                region_names.append(area)
-                seen.add(area)
+        for section in ["sights", "lunch", "dinner"]:
+            for item in day.get(section, []):
+                place = (
+                    db.query(models.Destination).filter(models.Destination.place_id == item["place_id"]).first()
+                    or db.query(models.Meal).filter(models.Meal.place_id == item["place_id"]).first()
+                )
+                area = getattr(place, "area", None)
+                if area and area not in seen:
+                    region_names.append(area)
+                    seen.add(area)
 
     
     budget_comment = ask_gpt_budget_comment(total_cost, region_names, days=len(plan_json), num_people=num_people)

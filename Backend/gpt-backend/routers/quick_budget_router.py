@@ -28,7 +28,6 @@ def quick_budget_api(
         start_date_dt = datetime.strptime(startDate, "%Y-%m-%d").date()
         end_date_dt = datetime.strptime(endDate, "%Y-%m-%d").date()
 
-        # 서비스 함수 호출
         result = quick_budget(startCity, endCity, start_date_dt, end_date_dt, peopleNum, db)
 
         return {

@@ -70,7 +70,7 @@ class BudgetResponse(BaseModel):
     class Config:
         orm_mode = True  #Pydantic 모델로 변환
 
-#예산요청 스키마 추가
+#예산요청 스키마
 class ScheduleItem(BaseModel):
     place_id: str  
     time: Optional[str] = None

@@ -6,8 +6,8 @@ import logging
 from sqlalchemy.orm import Session
 from openai import OpenAI
 
-from models import QuickBudget  # 위에 정의한 모델
-from config import settings  # OPENAI_API_KEY 등 환경설정
+from models import QuickBudget
+from config import settings 
 
 
 # 로깅 설정

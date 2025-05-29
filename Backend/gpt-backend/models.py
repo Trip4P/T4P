@@ -97,7 +97,7 @@ class Budget(Base):
     comment = Column(String, nullable=True)
 
 class QuickBudget(Base):
-    __tablename__ = 'quick_budget'  # 다른 테이블 이름으로 설정
+    __tablename__ = 'quick_budget' 
 
     id = Column(Integer, primary_key=True, index=True)
 
