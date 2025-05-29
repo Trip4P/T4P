@@ -55,7 +55,6 @@ class ScheduleResponse(BaseModel):
         allow_population_by_alias = True
 
 class ScheduleDBResponse(BaseModel):
-    id: int
     startCity: str
     endCity: str
     startDate: str
