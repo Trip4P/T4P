@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import GoogleMapView from "../components/GoogleMapView";
+//import GoogleMapView from "../components/GoogleMapView";
 import PlaceDetailPage from "./PlaceDetail";
+import KakaoMapView  from "../components/KakaoMapView";
+
 
 export default function TravelPlan() {
   const navigate = useNavigate();
@@ -154,8 +156,9 @@ export default function TravelPlan() {
           ))}
 
         <div className="google-map">
-          <h2>동선 추천</h2>
-          <GoogleMapView places={places} />
+          <h2 className="text-xl font-semibold mb-2">동선 추천</h2>
+          <KakaoMapView places={places} />
+          {/* <GoogleMapView places={places} /> */}
         </div>
 
         {/* Bottom Buttons */}
