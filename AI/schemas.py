@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
+from datetime import date
 
 class UserCreate(BaseModel):
     username: str
@@ -33,7 +34,9 @@ class ScheduleCreate(BaseModel):
     endDate: str
     emotions: List[str]
     companions: Optional[List[str]] = []
-    schedule_json: str
+    food_types: List[str]
+    region: str
+    schedule_json: Optional[Dict[str, Any]] = {}
 
     class Config:
         allow_population_by_field_name = True
@@ -41,7 +44,7 @@ class ScheduleCreate(BaseModel):
 
 class PlaceInfo(BaseModel):
     name: str
-    place_id: str
+    place_id: Optional[str] = None
     description: Optional[str] = None
 
 class ScheduleResponse(BaseModel):
