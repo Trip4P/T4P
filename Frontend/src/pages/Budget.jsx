@@ -1,3 +1,4 @@
+// 여행 일정 추천하고 자동으로 예산 짜주는 페이지 (시나리오A)
 import { Doughnut } from "react-chartjs-2";
 import axios from "axios";
 // import { useNavigate } from "react-router-dom";
