@@ -1,4 +1,6 @@
+// 여행 일정 추천하고 자동으로 예산 짜주는 페이지 (시나리오A)
 import { Doughnut } from "react-chartjs-2";
+import axios from "axios";
 // import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
@@ -8,12 +10,47 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const BudgetResultPage = () => {
   // Dummy data for chart (to be replaced with backend data)
+  const [destination, setDestination] = useState("");
+  const [dateRange, setDateRange] = useState("");
+  const [totalBudget, setTotalBudget] = useState(0);
+  const [categoryBreakdown, setCategoryBreakdown] = useState([]);
+  const [aiComment, setAiComment] = useState("");
+  const [peopleCount, setPeopleCount] = useState(0);
+
+  useEffect(() => {
+    const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
+    if (storedStyle) {
+      setDestination(storedStyle.destination || "");
+      setDateRange(`${storedStyle.startDate} ~ ${storedStyle.endDate}`);
+    }
+
+    const travelPlan = JSON.parse(localStorage.getItem("travelPlan"));
+    if (travelPlan) {
+      if (travelPlan.peopleCount) {
+        setPeopleCount(travelPlan.peopleCount);
+      }
+      axios
+        .get("/api/schedules/budgets", travelPlan)
+        .then((res) => {
+          setTotalBudget(res.data.totalBudget);
+          setCategoryBreakdown(res.data.categoryBreakdown);
+          setAiComment(res.data.aiComment);
+        })
+        .catch((err) => console.error("예산 요청 실패", err));
+    }
+  }, []);
+
+  const chartLabels = categoryBreakdown.map((item) => Object.keys(item)[0]);
+  const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
+
   const data = {
-    labels: ["숙소", "교통", "식비", "기타"],
+    // labels: ["숙소", "교통", "식비", "기타"],
+    labels: chartLabels,
     datasets: [
       {
         label: "비용 비중",
-        data: [300000, 150000, 180000, 90000],
+        // data: [300000, 150000, 180000, 90000],
+        data: chartData,
         backgroundColor: [
           "#3B82F6", // blue-500
           "#60A5FA", // blue-400
@@ -25,21 +62,17 @@ const BudgetResultPage = () => {
     ],
   };
 
-  const [destination, setDestination] = useState("");
-  const [dateRange, setDateRange] = useState("");
-
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("travelStyle"));
-    if (stored) {
-      setDestination(stored.destination || "");
-      setDateRange(`${stored.startDate} ~ ${stored.endDate}`);
-    }
-  }, []);
+  // useEffect(() => {
+  //   const stored = JSON.parse(localStorage.getItem("travelStyle"));
+  //   if (stored) {
+  //     setDestination(stored.destination || "");
+  //     setDateRange(`${stored.startDate} ~ ${stored.endDate}`);
+  //   }
+  // }, []);
 
   // const navigate = useNavigate();
 
   return (
-  
     <>
       <Header />
       <div className="bg-blue-50 min-h-screen py-16 px-6">
@@ -64,7 +97,7 @@ const BudgetResultPage = () => {
               </div>
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">인원</p>
-                <p className="font-semibold">2명</p>
+                <p className="font-semibold">{peopleCount}명</p>
               </div>
             </div>
           </section>
@@ -77,20 +110,36 @@ const BudgetResultPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
               <div className="text-center md:text-left">
                 <p className="text-gray-500 mb-2">총 예상 예산</p>
-                <p className="text-3xl font-bold text-blue-800">₩ 720,000</p>
+                {/* <p className="text-3xl font-bold text-blue-800">₩ 720,000</p> */}
+                <p className="text-3xl font-bold text-blue-800">
+                  ₩ {totalBudget.toLocaleString()}
+                </p>
               </div>
               <div className="w-64 mx-auto md:mx-0">
                 <Doughnut data={data} />
+                {/* 테스트 코드용 */}
+                <ul className="mt-4 text-sm text-center md:text-left">
+                  {categoryBreakdown.map((item, idx) => {
+                    const label = Object.keys(item)[0];
+                    const value = Object.values(item)[0];
+                    return (
+                      <li key={idx}>
+                        {label}: ₩ {value.toLocaleString()}
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             </div>
           </section>
 
           {/* 설명 & 버튼 */}
           <section className="text-center space-y-4">
-            <p className="text-sm text-blue-600">
+            {/* <p className="text-sm text-blue-600">
               예산 한줄평: 여행지 물가 기준으로는 꽤 여유로운 편이에요. 원하는
               곳 마음껏 즐기세요!
-            </p>
+            </p> */}
+            <p className="text-sm text-blue-600">{aiComment}</p>
             <div className="space-x-4">
               <button className="bg-white border border-blue-500 text-blue-600 rounded-lg px-4 py-2 hover:bg-blue-100 transition">
                 예산 다시 추천 받기

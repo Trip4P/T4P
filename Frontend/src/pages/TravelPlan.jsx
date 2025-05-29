@@ -54,7 +54,7 @@ export default function TravelPlan() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await axios.get("/api/travel-plan");
+        const res = await axios.post("/api/user-preference");
         const stored = JSON.parse(localStorage.getItem("travelStyle"));
 
         if (!stored) {

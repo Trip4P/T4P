@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 import json
 from passlib.context import CryptContext
+from typing import Optional
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -25,14 +26,14 @@ def get_user_by_username(db: Session, username: str):
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: int):
+def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: Optional[int] = None):
     # schedule_json이 dict일 경우 str 변환
     schedule_json_str = schedule.schedule_json
     if schedule_json_str and not isinstance(schedule_json_str, str):
         schedule_json_str = json.dumps(schedule_json_str, ensure_ascii=False)
 
     db_schedule = models.Schedule(
-        user_id=user_id,
+        user_id=user_id,  # user_id가 None이어도 저장 가능하게 models.Schedule 테이블 user_id 컬럼 nullable 처리 필요
         start_city=schedule.startCity,
         end_city=schedule.endCity,
         start_date=schedule.startDate,
@@ -45,6 +46,7 @@ def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: int)
     db.commit()
     db.refresh(db_schedule)
     return db_schedule
+
 
 def get_schedules_by_user(db: Session, user_id: int):
     return db.query(models.Schedule).filter(models.Schedule.user_id == user_id).all()
@@ -100,3 +102,20 @@ def convert_db_schedule_to_response(db_schedule: models.Schedule) -> schemas.Sch
         with_=json.loads(db_schedule.companions) if db_schedule.companions else [],
         schedule_json=json.loads(db_schedule.schedule_json) if db_schedule.schedule_json else None,
     )
+
+def create_budget(db: Session, schedule_id: int, food_cost: int, entry_fees: int, transport_cost: int):
+    total = food_cost + entry_fees + transport_cost
+    budget = models.Budget(
+        schedule_id=schedule_id,
+        food_cost=food_cost,
+        entry_fees=entry_fees,
+        transport_cost=transport_cost,
+        total_budget=total
+    )
+    db.add(budget)
+    db.commit()
+    db.refresh(budget)
+    return budget
+
+def get_budget_by_schedule_id(db: Session, schedule_id: int):
+    return db.query(models.Budget).filter(models.Budget.schedule_id == schedule_id).first()

@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
+from datetime import date
+from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     username: str
@@ -33,7 +35,9 @@ class ScheduleCreate(BaseModel):
     endDate: str
     emotions: List[str]
     companions: Optional[List[str]] = []
-    schedule_json: str
+    food_types: List[str]
+    region: str
+    schedule_json: Optional[Dict[str, Any]] = {}
 
     class Config:
         allow_population_by_field_name = True
@@ -41,7 +45,7 @@ class ScheduleCreate(BaseModel):
 
 class PlaceInfo(BaseModel):
     name: str
-    place_id: str
+    place_id: Optional[str] = None
     description: Optional[str] = None
 
 class ScheduleResponse(BaseModel):
@@ -82,3 +86,37 @@ class ScheduleUpdate(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class BudgetResponse(BaseModel):
+    id: int
+    schedule_id: int
+    food_cost: int
+    entry_fees: int
+    transport_cost: int
+    total_budget: int
+    created_at: str 
+
+    class Config:
+        orm_mode = True  #Pydantic 모델로 변환
+
+#예산요청 스키마
+class ScheduleItem(BaseModel):
+    place_id: str  
+    time: Optional[str] = None
+    placeType: Optional[str] = None
+    place: Optional[str] = None  
+
+class PlanBudgetRequest(BaseModel):
+    plans: Dict[str, List[ScheduleItem]]
+
+class CategoryBreakdown(BaseModel):
+    교통: int
+    식비: int
+    관광: int
+
+class PlanBudgetResponse(BaseModel):
+    totalBudget: int
+    categoryBreakdown: CategoryBreakdown
+    aiComment: str
+
+        
