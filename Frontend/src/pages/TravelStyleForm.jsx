@@ -15,7 +15,7 @@ const categories = [
   "화나는",
 ];
 
-const companions = [
+const companionBoxes = [
   "혼자",
   "친구와",
   "연인과",
@@ -26,12 +26,12 @@ const companions = [
 
 export default function TravelStyleForm() {
   const navigate = useNavigate();
-  const [departure, setDeparture] = useState("");
-  const [destination, setDestination] = useState("");
+  const [startCity, setStartCity] = useState("");
+  const [endCity, setEndCity] = useState("");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [emotion, setEmotion] = useState([]);
-  const [companion, setCompanion] = useState([]);
+  const [emotions, setEmotions] = useState([]);
+  const [companions, setCompanions] = useState([]);
   const [peopleCount, setPeopleCount] = useState(1);
 
   return (
@@ -48,8 +48,8 @@ export default function TravelStyleForm() {
           <h2 className="text-lg font-semibold mb-4">여행 출발지</h2>
           <input
             type="text"
-            value={departure}
-            onChange={(e) => setDeparture(e.target.value)}
+            value={startCity}
+            onChange={(e) => setStartCity(e.target.value)}
             className="w-full border border-gray-300 rounded px-4 py-2"
             placeholder="ex) 서울역"
           />
@@ -58,8 +58,8 @@ export default function TravelStyleForm() {
           <h2 className="text-lg font-semibold mt-4 mb-4">여행 목적지</h2>
           <input
             type="text"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
+            value={endCity}
+            onChange={(e) => setEndCity(e.target.value)}
             className="w-full border border-gray-300 rounded px-4 py-2"
             placeholder="ex) 잠실"
           />
@@ -106,12 +106,12 @@ export default function TravelStyleForm() {
                 <input
                   type="checkbox"
                   className="form-checkbox accent-black"
-                  checked={emotion.includes(item)}
+                  checked={emotions.includes(item)}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setEmotion([...emotion, item]);
+                      setEmotions([...emotions, item]);
                     } else {
-                      setEmotion(emotion.filter((i) => i !== item));
+                      setEmotions(emotions.filter((i) => i !== item));
                     }
                   }}
                 />
@@ -124,17 +124,17 @@ export default function TravelStyleForm() {
         <div className="bg-gray-50 rounded-xl p-6 mb-10">
           <h2 className="text-lg font-semibold mb-4">누구와 떠나나요</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {companions.map((item) => (
+            {companionBoxes.map((item) => (
               <label key={item} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   className="form-checkbox accent-black"
-                  checked={companion.includes(item)}
+                  checked={companions.includes(item)}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setCompanion([...companion, item]);
+                      setCompanions([...companions, item]);
                     } else {
-                      setCompanion(companion.filter((i) => i !== item));
+                      setCompanions(companions.filter((i) => i !== item));
                     }
                   }}
                 />
@@ -161,12 +161,12 @@ export default function TravelStyleForm() {
           <button
             onClick={() => {
               const travelStyleDate = {
-                departure,
-                destination,
+                startCity,
+                endCity,
                 startDate: startDate ? startDate.toISOString().split("T")[0] : null,
                 endDate: endDate ? endDate.toISOString().split("T")[0] : null,
-                emotion,
-                companion,
+                emotions,
+                companions,
                 peopleCount,
               };
               // 로컬 스토리지 저장

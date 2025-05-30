@@ -10,7 +10,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const BudgetResultPage = () => {
   // Dummy data for chart (to be replaced with backend data)
-  const [destination, setDestination] = useState("");
+  const [endCity, setEndCity] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [totalBudget, setTotalBudget] = useState(0);
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
@@ -20,7 +20,7 @@ const BudgetResultPage = () => {
   useEffect(() => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
     if (storedStyle) {
-      setDestination(storedStyle.destination || "");
+      setEndCity(storedStyle.destination || "");
       setDateRange(`${storedStyle.startDate} ~ ${storedStyle.endDate}`);
     }
 
@@ -30,7 +30,7 @@ const BudgetResultPage = () => {
         setPeopleCount(travelPlan.peopleCount);
       }
       axios
-        .get("/api/schedules/budgets", travelPlan)
+        .post("/api/schedules/budgets", travelPlan)
         .then((res) => {
           setTotalBudget(res.data.totalBudget);
           setCategoryBreakdown(res.data.categoryBreakdown);
@@ -89,7 +89,7 @@ const BudgetResultPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">목적지</p>
-                <p className="font-semibold">{destination}</p>
+                <p className="font-semibold">{endCity}</p>
               </div>
               <div className="bg-blue-100 rounded-lg p-4">
                 <p className="text-gray-600">여행일</p>
