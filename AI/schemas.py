@@ -110,13 +110,37 @@ class PlanBudgetRequest(BaseModel):
     plans: Dict[str, List[ScheduleItem]]
 
 class CategoryBreakdown(BaseModel):
-    교통: int
-    식비: int
-    관광: int
+    food: int
+    transport: int
+    activities: int
 
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
     categoryBreakdown: CategoryBreakdown
     aiComment: str
 
-        
+#예산요청 스키마2
+class SchedulePlace(BaseModel):
+    time: str
+    place: str
+    placeId: int
+    pricelevel: int
+    latitude: float
+    longitude: float
+
+class PlanItem(BaseModel):
+    day: int
+    schedule: List[SchedulePlace]
+
+class BudgetRequest(BaseModel):
+    plans: List[PlanItem]
+    peopleCount: int
+
+class CategoryItem(BaseModel):
+    category: str
+    amount: int
+
+class BudgetResponse(BaseModel):
+    totalBudget: int
+    categoryBreakdown: List[Dict[str, int]]  # key가 카테고리명, value가 금액인 dict 리스트
+    aiComment: str
