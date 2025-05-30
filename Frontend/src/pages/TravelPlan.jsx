@@ -6,7 +6,6 @@ import Header from "../components/Header";
 import PlaceDetailPage from "./PlaceDetail";
 import KakaoMapView  from "../components/KakaoMapView";
 
-
 export default function TravelPlan() {
   const navigate = useNavigate();
   const [startDate, setStartDate] = useState("");
@@ -131,9 +130,9 @@ export default function TravelPlan() {
             <div key={idx} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-blue-700 font-semibold">{item.time}</span>
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
+                {/* <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
                   {item.placeType}
-                </span>
+                </span> */}
               </div>
               <h3 className="text-lg font-bold">{item.place}</h3>
               <p className="text-sm text-blue-700">{item.aiComment}</p>
