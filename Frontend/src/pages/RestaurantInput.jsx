@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const preferences = {
   companions: ["혼자", "친구와", "연인과", "배우자와", "아이와", "부모님과"],
@@ -128,6 +129,7 @@ export default function TasteProfilePage() {
           </div>
         </div>
       </div>
+      <Footer/>
     </>
   );
 }

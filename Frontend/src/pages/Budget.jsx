@@ -5,6 +5,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -156,6 +157,7 @@ const BudgetResultPage = () => {
           T4P &nbsp;|&nbsp; SPC 팀프로젝트 &nbsp;|&nbsp; 앗호
         </footer>
       </div>
+      <Footer/>
     </>
   );
 };

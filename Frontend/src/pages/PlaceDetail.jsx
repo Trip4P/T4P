@@ -1,5 +1,6 @@
 // 여행 일정 추천 페이지에서 상세 정보를 눌렀을 때 나오는 페이지
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -137,6 +138,7 @@ export default function PlaceDetailPage() {
           </div>
         </div>
       </div>
+      <Footer/>
     </>
   );
 }

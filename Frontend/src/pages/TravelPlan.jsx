@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 //import GoogleMapView from "../components/GoogleMapView";
 import PlaceDetailPage from "./PlaceDetail";
 import KakaoMapView  from "../components/KakaoMapView";
@@ -183,6 +184,7 @@ export default function TravelPlan() {
           {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
+      <Footer />
     </>
   );
 }
