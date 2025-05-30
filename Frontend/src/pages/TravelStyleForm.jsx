@@ -46,137 +46,137 @@ export default function TravelStyleForm() {
         {/* 출발지 입력 */}
         <div className="bg-gray-50 rounded-xl p-6 mb-10">
           <h2 className="text-lg font-semibold mb-4">여행 출발지</h2>
-          <input
-            type="text"
-            value={departure}
-            onChange={(e) => setDeparture(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            placeholder="ex) 서울역"
-          />
+        {/* 출발지 입력 */}
+        <input
+          type="text"
+          data-testid="input-departure"
+          value={departure}
+          onChange={(e) => setDeparture(e.target.value)}
+          className="w-full border border-gray-300 rounded px-4 py-2"
+          placeholder="ex) 서울역"
+        />
 
-          {/* 목적지 입력 */}
-          <h2 className="text-lg font-semibold mt-4 mb-4">여행 목적지</h2>
-          <input
-            type="text"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            placeholder="ex) 잠실"
-          />
-        </div>
+        {/* 목적지 입력 */}
+        <input
+          type="text"
+          data-testid="input-destination"
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
+          className="w-full border border-gray-300 rounded px-4 py-2"
+          placeholder="ex) 잠실"
+        />
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">여행 기간</h2>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex flex-col">
-              <label className="mb-1 font-medium">여행 시작일</label>
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                selectStart
-                startDate={startDate}
-                endDate={endDate}
-                placeholderText="시작일 선택"
-                dateFormat="yyyy-MM-dd"
-                className="border border-gray-300 rounded px-4 py-2"
-              />
-            </div>
-
-            <div className="flex flex-col">
-              <label className="mb-1 font-medium">여행 종료일</label>
-              <DatePicker
-                selected={endDate}
-                onChange={(date) => setEndDate(date)}
-                selectsEnd
-                startDate={startDate}
-                endDate={endDate}
-                placeholderText="종료일 선택"
-                dateFormat="yyyy-MM-dd"
-                className="border border-gray-300 rounded px-4 py-2"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">현재 나의 감정</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {categories.map((item) => (
-              <label key={item} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="form-checkbox accent-black"
-                  checked={emotion.includes(item)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setEmotion([...emotion, item]);
-                    } else {
-                      setEmotion(emotion.filter((i) => i !== item));
-                    }
-                  }}
-                />
-                <span>{item}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">누구와 떠나나요</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {companions.map((item) => (
-              <label key={item} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  className="form-checkbox accent-black"
-                  checked={companion.includes(item)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setCompanion([...companion, item]);
-                    } else {
-                      setCompanion(companion.filter((i) => i !== item));
-                    }
-                  }}
-                />
-                <span>{item}</span>
-              </label>
-            ))}
-          </div>
-
-          <h2 className="text-lg font-semibold mt-4 mb-4">몇 명이서 떠나나요</h2>
-          <div className="flex items-center space-x-4">
-            {/* <label className="text-gray-700 font-medium">인원수:</label> */}
+        {/* 여행 시작일 */}
+        <DatePicker
+          selected={startDate}
+          onChange={(date) => setStartDate(date)}
+          selectsStart
+          startDate={startDate}
+          endDate={endDate}
+          placeholderText="시작일 선택"
+          dateFormat="yyyy-MM-dd"
+          customInput={
             <input
-              type="number"
-              min="1"
-              value={peopleCount}
-              onChange={(e) => setPeopleCount(Number(e.target.value))}
-              aria-label="인원수"
-              className="border border-gray-300 rounded-lg px-4 py-2 w-28 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              data-testid="date-start"
+              className="border border-gray-300 rounded px-4 py-2"
+              /> 
+          }
+        />
+
+        {/* 여행 종료일 */}
+        <DatePicker
+          selected={endDate}
+          onChange={(date) => setEndDate(date)}
+          selectsEnd
+          startDate={startDate}
+          endDate={endDate}
+          placeholderText="종료일 선택"
+          dateFormat="yyyy-MM-dd"
+          customInput={
+            <input
+            className="border border-gray-300 rounded px-4 py-2"
+            data-testid="date-end"
             />
-          </div>
+          }
+        />
+
+        {/* 감정 체크박스 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {categories.map((item) => (
+            <label key={item} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                data-testid={`emotion-${item}`}
+                className="form-checkbox accent-black"
+                checked={emotion.includes(item)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setEmotion([...emotion, item]);
+                  } else {
+                    setEmotion(emotion.filter((i) => i !== item));
+                  }
+                }}
+              />
+              <span>{item}</span>
+            </label>
+          ))}
         </div>
 
-        <div className="text-center">
-          <button
-            onClick={() => {
-              const travelStyleDate = {
-                departure,
-                destination,
-                startDate: startDate ? startDate.toISOString().split("T")[0] : null,
-                endDate: endDate ? endDate.toISOString().split("T")[0] : null,
-                emotion,
-                companion,
-                peopleCount,
-              };
-              // 로컬 스토리지 저장
-              localStorage.setItem("travelStyle", JSON.stringify(travelStyleDate));
-              navigate("/TravelPlan");
-            }}
-            className="bg-blue-600 text-white rounded px-6 py-3 hover:bg-blue-800 transition"
-          >
-            분석 시작하기
-          </button>
+        {/* 동행자 체크박스 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {companions.map((item) => (
+            <label key={item} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                data-testid={`companion-${item}`}
+                className="form-checkbox accent-black"
+                checked={companion.includes(item)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setCompanion([...companion, item]);
+                  } else {
+                    setCompanion(companion.filter((i) => i !== item));
+                  }
+                }}
+              />
+              <span>{item}</span>
+            </label>
+          ))}
+        </div>
+
+
+        {/* 인원수 입력 */}
+        <input
+          type="number"
+          min="1"
+          data-testid="input-people-count"
+          value={peopleCount}
+          onChange={(e) => setPeopleCount(Number(e.target.value))}
+          aria-label="인원수"
+          className="border border-gray-300 rounded-lg px-4 py-2 w-28 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+
+        {/* 분석 시작하기 버튼 */}
+        <button
+          data-testid="btn-analyze"
+          onClick={() => {
+            const travelStyleDate = {
+              departure,
+              destination,
+              startDate: startDate ? startDate.toISOString().split("T")[0] : null,
+              endDate: endDate ? endDate.toISOString().split("T")[0] : null,
+              emotion,
+              companion,
+              peopleCount,
+            };
+            localStorage.setItem("travelStyle", JSON.stringify(travelStyleDate));
+            navigate("/TravelPlan");
+          }}
+          className="bg-blue-600 text-white rounded px-6 py-3 hover:bg-blue-800 transition"
+        >
+          분석 시작하기
+        </button>
+
         </div>
       </div>
     </>
