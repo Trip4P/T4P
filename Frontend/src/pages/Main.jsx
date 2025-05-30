@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 export default function MainPage() {
   return (
@@ -109,26 +110,7 @@ export default function MainPage() {
         </button>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-100 text-sm text-gray-600 px-8 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div>
-            <div className="font-bold text-blue-600 mb-1">거기 어때 AI</div>
-            <p>AI 기술로 당신의 완벽한 여행을 설계해드립니다.</p>
-          </div>
-          <div className="mt-4 md:mt-0">
-            <h4 className="font-semibold mb-1">서비스</h4>
-            <ul className="space-y-1">
-              <li>여행 플래너</li>
-              <li>맞춤 추천</li>
-              <li>예산 계산</li>
-            </ul>
-          </div>
-        </div>
-        <div className="mt-6 text-center text-xs text-gray-500">
-          © 2025 T4P. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
