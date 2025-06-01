@@ -1,4 +1,5 @@
 import os
+import redis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,3 +13,10 @@ class Settings:
     ODSAY_API_KEY: str = os.getenv("ODSAY_API_KEY")
 
 settings = Settings()
+
+redis_client = redis.Redis(
+    host="localhost",
+    port=6379,
+    db=0,
+    decode_responses=True # 문자열 자동 디코딩
+)

@@ -5,7 +5,7 @@ from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {'extend_existing': True}  # 필요시 추가
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
@@ -23,10 +23,10 @@ class Schedule(Base):
     end_city = Column(String)
     start_date = Column(String)
     end_date = Column(String)
-    emotions = Column(String)       # JSON 문자열 저장
-    companions = Column(String)     # JSON 문자열 저장
+    emotions = Column(String)       
+    companions = Column(String)     
     schedule_json = Column(Text)
-    num_people = Column(Integer)
+    people_count = Column(Integer, default=1)
 
     owner = relationship("User", back_populates="schedules")
 

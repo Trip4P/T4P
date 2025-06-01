@@ -75,7 +75,7 @@ const mockApiResponse = {
 
 describe("TravelPlan Component", () => {
   test("여행 일정 추천 from API data", async () => {
-    axios.get.mockResolvedValueOnce(mockApiResponse);
+    axios.post.mockResolvedValueOnce(mockApiResponse);
 
     render(
       <BrowserRouter>

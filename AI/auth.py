@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -37,15 +37,21 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 from typing import Optional
 
-async def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    if not token:
+async def get_current_user_optional(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db)
+):
+    if authorization is None:
         return None
     try:
-        payload = jwt.decode(token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM])
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            return None
+        payload = jwt.decode(token, config.settings.SECRET_KEY, algorithms=[config.settigns.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             return None
-    except JWTError:
+    except Exception:
         return None
     user = db.query(models.User).filter(models.User.username == username).first()
     return user
