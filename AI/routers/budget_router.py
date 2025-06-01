@@ -3,38 +3,26 @@ from sqlalchemy.orm import Session
 from database import get_db
 import services, schemas, crud
 from models import Budget
-from services.budget_service import calculate_total_budget_from_schedule_id
-
+from schemas import BudgetRequest, BudgetResponse, CategoryItem
+from services import budget_service
 router = APIRouter(prefix="/api/schedules", tags=["budgets"])
 
-@router.get("/budgets/{schedule_id}", response_model=schemas.PlanBudgetResponse)
-def calculate_budget_by_schedule_id(schedule_id: int, db: Session = Depends(get_db)):
-    try:
-        print("📌 schedule_id:", schedule_id)
+@router.post("/budgets", response_model=BudgetResponse)
+def calculate_budget_from_schedule_data(request: BudgetRequest, db: Session = Depends(get_db)):
+    raw_result = budget_service.calculate_total_budget_from_plan(db, request)
 
-        budget_result = services.calculate_total_budget_from_schedule_id(db, schedule_id)
-        print("✅ budget_result:", budget_result)
+    category_dict = {
+        "교통": raw_result["transport_cost"],
+        "식비": raw_result["food_cost"],
+        "관광": raw_result["entry_fees"]
+    }
 
-        saved_budget = services.save_budget(db, schedule_id, budget_result)
-        print("✅ saved_budget:", saved_budget)
+    # key, value 쌍을 각각 하나의 딕셔너리로 만들어 리스트로 변환
+    category_breakdown_list = [{k: v} for k, v in category_dict.items()]
 
-        response = {
-            "totalBudget": budget_result["total_cost"],
-            "categoryBreakdown": {
-                "교통": budget_result["transport_cost"],
-                "식비": budget_result["food_cost"],
-                "관광": budget_result["entry_fees"],
-            },
-            "aiComment": budget_result["comment"]
-        }
-        print("✅ response:", response)
+    return BudgetResponse(
+        totalBudget=raw_result["total_cost"],
+        categoryBreakdown=category_breakdown_list,
+        aiComment=raw_result["comment"]
+    )
 
-        return response
-
-    except ValueError as e:
-        print("⚠️ ValueError:", str(e))
-        raise HTTPException(status_code=404, detail=str(e))
-
-    except Exception as e:
-        print("❌ 서버 내부 오류:", e)
-        raise HTTPException(status_code=500, detail="Internal server error")
