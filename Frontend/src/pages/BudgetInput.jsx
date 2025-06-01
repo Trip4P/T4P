@@ -15,7 +15,23 @@ import DatePicker from "react-datepicker";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend
+);
+
+const generateColors = (count) => {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    const hue = (i * 360) / count; // 색상환을 나눠서
+    colors.push(`hsl(${hue}, 70%, 60%)`);
+  }
+  return colors;
+};
 
 export default function TravelBudgetInputPage() {
   const [showResult, setShowResult] = useState(false);
@@ -26,6 +42,7 @@ export default function TravelBudgetInputPage() {
   const [peopleCount, setPeopleCount] = useState("");
   const [budgetData, setBudgetData] = useState(null);
   const [aiComment, setAiComment] = useState("");
+  const [totalBudget, setTotalBudget] = useState(null);
 
   // 💰 더미 예산 데이터
   // const dummyBudgetData = {
@@ -60,6 +77,42 @@ export default function TravelBudgetInputPage() {
         position: "bottom",
       },
     },
+  };
+
+  const fetchBudgetData = async () => {
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/api/budgets", {
+        startCity,
+        endCity,
+        startDate: startDate?.toISOString().split("T")[0],
+        endDate: endDate?.toISOString().split("T")[0],
+        peopleNum: peopleCount,
+      });
+
+      const response = res.data;
+      const entries = Object.entries(response.categoryBreakdown || {});
+      const labels = entries.map(([key]) => key);
+      const values = entries.map(([, value]) => value);
+      const backgroundColors = generateColors(labels.length);
+
+      setBudgetData({
+        labels,
+        datasets: [
+          {
+            label: "예상 예산 (원)",
+            data: values,
+            backgroundColor: backgroundColors,
+            borderWidth: 1,
+          },
+        ],
+      });
+
+      setAiComment(response.aiComment);
+      setShowResult(true);
+      setTotalBudget(response.totalBudget);
+    } catch (err) {
+      console.error("API호출 실패", err);
+    }
   };
 
   return (
@@ -152,48 +205,7 @@ export default function TravelBudgetInputPage() {
           {/* 버튼 */}
           <div className="text-center mt-6">
             <button
-              onClick={async () => {
-                try {
-                  const res = await axios.post("/api/budgets", {
-                    startCity,
-                    endCity,
-                    startDate: startDate?.toISOString().split("T")[0],
-                    endDate: endDate?.toISOString().split("T")[0],
-                    peopleCount,
-                  });
-
-                  const response = res.data;
-                  const labels = response.breakdown.map(
-                    (item) => Object.keys(item)[0]
-                  );
-                  const values = response.breakdown.map(
-                    (item) => Object.values(item)[0]
-                  );
-
-                  setBudgetData({
-                    labels,
-                    datasets: [
-                      {
-                        label: "예상 예산 (원)",
-                        data: values,
-                        backgroundColor: [
-                          "#FF6384",
-                          "#36A2EB",
-                          "#FFCE56",
-                          "#48C0c0",
-                          "#9966FF",
-                        ],
-                        borderWidth: 1,
-                      },
-                    ],
-                  });
-
-                  setAiComment(response.aiComment);
-                  setShowResult(true);
-                } catch (err) {
-                  console.error("API호출 실패", err);
-                }
-              }}
+              onClick={fetchBudgetData}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
             >
               예상 예산 출력하기
@@ -211,6 +223,9 @@ export default function TravelBudgetInputPage() {
                 곳 마음껏 즐기세요!
               </p> */}
               <p className="text-lg font-semibold text-gray-800">{aiComment}</p>
+              <p className="text-xl font-bold text-center text-gray-800">
+                총 예산: {totalBudget?.toLocaleString()}원
+              </p>
             </div>
 
             {/* 📊 예산 차트 */}
@@ -224,7 +239,10 @@ export default function TravelBudgetInputPage() {
 
             {/* 버튼들 */}
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
-              <button className="border border-gray-600 px-4 py-2 rounded hover:bg-gray-200">
+              <button
+                className="border border-gray-600 px-4 py-2 rounded hover:bg-gray-200"
+                onClick={fetchBudgetData}
+              >
                 예산 다시 추천 받기
               </button>
               <button className="bg-black text-white px-4 py-2 rounded hover:bg-gray-900">
@@ -234,7 +252,7 @@ export default function TravelBudgetInputPage() {
           </div>
         )}
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 }

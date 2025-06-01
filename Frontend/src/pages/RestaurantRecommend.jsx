@@ -15,9 +15,9 @@ export default function RestaurantRecommendationPage() {
 
     if (tasteProfile) {
       axios
-        .get("/api/food-places", {
+        .post("http://127.0.0.1:8000/ai/restaurant", {
           companion: tasteProfile.companions,
-          foodPreference: tasteProfile.foodTypes,
+          foodPreference: tasteProfile.foodPreference,
           atmospheres: tasteProfile.atmospheres,
           city: tasteProfile.city,
           region: tasteProfile.region,

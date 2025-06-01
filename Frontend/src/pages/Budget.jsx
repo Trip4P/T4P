@@ -18,7 +18,6 @@ const BudgetResultPage = () => {
   const [aiComment, setAiComment] = useState("");
   const [peopleCount, setPeopleCount] = useState(0);
 
-  // TODO: API Request에 endCity 추가
   useEffect(() => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
     if (storedStyle) {
