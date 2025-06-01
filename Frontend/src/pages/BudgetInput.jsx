@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 import DatePicker from "react-datepicker";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -233,6 +234,7 @@ export default function TravelBudgetInputPage() {
           </div>
         )}
       </div>
+      <Footer/>
     </>
   );
 }

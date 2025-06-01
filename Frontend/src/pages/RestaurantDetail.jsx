@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 export default function RestaurantDetailPage() {
   const { placeId } = useParams();
@@ -145,6 +146,7 @@ export default function RestaurantDetailPage() {
           </div>
         </div>
       </div>
+      <Footer/>
     </>
   );
 }
