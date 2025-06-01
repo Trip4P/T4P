@@ -54,19 +54,35 @@ export default function TravelPlan() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await axios.post("/api/user-preference");
         const stored = JSON.parse(localStorage.getItem("travelStyle"));
-
+        
         if (!stored) {
           console.warn("로컬 스토리지에 사용자 성향 정보 없음");
           return;
         }
 
+        const res = await axios.post("http://127.0.0.1:8000/ai/schedule/", {
+          startCity: stored.startCity,
+          endCity: stored.endCity,
+          startDate: stored.startDate,
+          endDate: stored.endDate,
+          emotions: stored.emotions,
+          companions: stored.companions,
+          peopleCount: stored.peopleCount
+        });
+
         setStartDate(stored.startDate);
         setEndDate(stored.endDate);
         setTags(res.data.tags || []);
         setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
-        setPlans(res.data.plans || []);
+
+        // 🔐 방어 코드
+      if (Array.isArray(res.data.plans)) {
+        setPlans(res.data.plans);
+      } else {
+        console.warn("plans가 배열이 아닙니다:", res.data.plans);
+        setPlans([]);
+      }
 
       } catch (err) {
         console.error("에러 발생", err);
@@ -127,7 +143,7 @@ export default function TravelPlan() {
         {/* Schedule */}
         {plans
           .find((plan) => plan.day === activeDay)
-          ?.schedule.map((item, idx) => (
+          ?.schedule?.map((item, idx) => (
             <div key={idx} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-blue-700 font-semibold">{item.time}</span>

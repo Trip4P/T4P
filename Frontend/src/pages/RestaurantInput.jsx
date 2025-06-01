@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 
 const preferences = {
   companions: ["혼자", "친구와", "연인과", "배우자와", "아이와", "부모님과"],
-  foodTypes: ["한식", "일식", "중식", "양식", "동남아식"],
+  foodPreference: ["한식", "일식", "중식", "양식", "동남아식"],
   atmospheres: [
     "데이트",
     "비즈니스 미팅",
@@ -51,7 +51,7 @@ export default function TasteProfilePage() {
   const navigate = useNavigate();
 
   const [selectedCompanions, setSelectedCompanions] = useState([]);
-  const [selectedFoodTypes, setSelectedFoodTypes] = useState([]);
+  const [selectedFoodPreferences, setSelectedFoodPreferences] = useState([]);
   const [selectedAtmospheres, setSelectedAtmospheres] = useState([]);
   const [city, setCity] = useState("");
   const [region, setRegion] = useState("");
@@ -76,9 +76,9 @@ export default function TasteProfilePage() {
           />
           <CheckboxGroup
             title="선호하는 음식 종류는?"
-            items={preferences.foodTypes}
-            selectedItems={selectedFoodTypes}
-            onChange={setSelectedFoodTypes}
+            items={preferences.foodPreference}
+            selectedItems={selectedFoodPreferences}
+            onChange={setSelectedFoodPreferences}
           />
           <CheckboxGroup
             title="선호하는 분위기는?"
@@ -114,7 +114,7 @@ export default function TasteProfilePage() {
               onClick={() => {
                 const tasteProfile = {
                   companions: selectedCompanions,
-                  foodTypes: selectedFoodTypes,
+                  foodPreference: selectedFoodPreferences,
                   atmospheres: selectedAtmospheres,
                   city,
                   region,
