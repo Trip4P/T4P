@@ -97,7 +97,7 @@ class BudgetResponse(BaseModel):
     created_at: str 
 
     class Config:
-        orm_mode = True  #Pydantic 모델로 변환
+        orm_mode = True  
 
 #예산요청 스키마
 class ScheduleItem(BaseModel):
