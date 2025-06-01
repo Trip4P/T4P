@@ -6,6 +6,7 @@ import schemas, crud, models
 from database import get_db
 from auth import get_current_user_optional  # 로그인 선택적 처리
 from services.gpt_service import get_ai_schedule
+import re
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -108,7 +109,6 @@ def recommend_schedule(
         plans_to_save = {}
         for day in ai_plans_list:
             day_key = f"day{day['day']}"
-            # day는 {"day": int, "schedule": [...]}
             plans_to_save[day_key] = day
 
         # 6) schedule_json에서 aiEmpathy, tags 제외하고 plans만 업데이트
@@ -120,15 +120,20 @@ def recommend_schedule(
 
         updated_schedule = crud.update_schedule(db, new_schedule.id, user_id, update_data)
 
-        # 7) 최종 응답 만들기 (DB 저장된 schedule_json을 다시 불러와 사용 가능)
+        # 7) 최종 응답을 위한 dict → list 변환
+        plans_list_for_response = []
+        for day_key in sorted(plans_to_save.keys(), key=lambda x: int(''.join(filter(str.isdigit, x)))):
+            day_data = plans_to_save[day_key]
+            plans_list_for_response.append(day_data)
+
+        # 8) 최종 응답 생성
         final_response = schemas.ScheduleResponse(
             aiEmpathy=ai_response_data.get("aiEmpathy", ""),
             tags=ai_response_data.get("tags", []),
-            plans=plans_to_save
+            plans=plans_list_for_response
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 호출 또는 저장 실패: {str(e)}")
 
     return final_response
-

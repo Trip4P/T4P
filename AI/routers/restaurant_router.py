@@ -15,18 +15,17 @@ class RestaurantRequest(BaseModel):
     city: str
     region: str
 
-# Response 모델
 class RestaurantPlace(BaseModel):
     name: str
     aiFoodComment: str
     tags: List[str]
     placeId: int
+    imageUrl: str
 
 class RestaurantResponse(BaseModel):
     aiComment: str
     places: List[RestaurantPlace]
 
-# GPT Prompt 생성 함수
 def generate_prompt(data: RestaurantRequest) -> str:
     return f"""
 사용자가 '{data.city} {data.region}' 지역으로 여행을 갑니다.
@@ -45,7 +44,8 @@ def generate_prompt(data: RestaurantRequest) -> str:
       "name": "맛집 이름",
       "aiFoodComment": "AI가 음식에 대해 한 줄 설명",
       "tags": ["뷰맛집", "가성비", ...],
-      "placeId": 숫자 (임의 번호 부여)
+      "placeId": 숫자 (임의 번호 부여),
+      "imageUrl": "맛집 사진 URL"
     }}
   ]
 }}
@@ -54,7 +54,6 @@ def generate_prompt(data: RestaurantRequest) -> str:
 @router.post("/ai/restaurant", response_model=RestaurantResponse)
 async def ai_recommend_restaurant(data: RestaurantRequest):
     prompt = generate_prompt(data)
-
     try:
         response = openai.chat.completions.create(
             model="gpt-4",
@@ -64,15 +63,10 @@ async def ai_recommend_restaurant(data: RestaurantRequest):
             ],
             temperature=0.8
         )
-
         content = response.choices[0].message.content
-
-        try:
-            parsed = json.loads(content)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="GPT 응답이 JSON 형식이 아닙니다.")
-
+        parsed = json.loads(content)
         return parsed
-
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="GPT 응답이 JSON 형식이 아닙니다.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"GPT 오류: {e}")

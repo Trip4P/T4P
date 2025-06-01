@@ -1,11 +1,13 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
 
+# 사용자 생성 요청
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     password: str
 
+# 사용자 응답
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -14,18 +16,20 @@ class UserResponse(BaseModel):
     class Config:
         orm_mode = True
 
+# 스케줄 요청용 기본 스키마
 class ScheduleBase(BaseModel):
     startCity: str
     endCity: str
     startDate: str
     endDate: str
     userEmotion: List[str]
-    with_: List[str] = Field(..., alias="companions")  # companions 필드와 매핑
+    with_: List[str] = Field(..., alias="companions")
 
     class Config:
         allow_population_by_field_name = True
         allow_population_by_alias = True
 
+# 스케줄 생성 요청
 class ScheduleCreate(BaseModel):
     startCity: str
     endCity: str
@@ -36,33 +40,38 @@ class ScheduleCreate(BaseModel):
     peopleCount: Optional[int] = 1
     aiEmpathy: Optional[str] = None
     tags: Optional[List[str]] = []
-    plans: Optional[Dict[str, Any]] = {}
+    plans: Optional[Dict[str, Any]] = {}  
     schedule_json: Optional[Dict[str, Any]] = {}
 
     class Config:
         allow_population_by_field_name = True
         allow_population_by_alias = True
 
+# 장소 정보 (GPT 응답 구조에 맞춤)
 class PlaceInfo(BaseModel):
     time: Optional[str]
-    name: str = Field(..., alias="place")  # GPT에서 place로 옴
+    name: str = Field(..., alias="place")
     place_id: Optional[int] = Field(None, alias="placeId")
     aiComment: Optional[str]
     latitude: Optional[float]
     longitude: Optional[float]
 
-class DayPlan(BaseModel):
+# 하루 단위 일정
+class ScheduleDayPlan(BaseModel):
+    day: int
     schedule: List[PlaceInfo]
 
+# GPT 응답용 스케줄 응답
 class ScheduleResponse(BaseModel):
     aiEmpathy: Optional[str] = ""
     tags: Optional[List[str]] = []
-    plans: Dict[str, DayPlan] = Field(default_factory=dict)
+    plans: List[ScheduleDayPlan]
 
     class Config:
         allow_population_by_field_name = True
         allow_population_by_alias = True
 
+# DB에서 스케줄 조회 응답
 class ScheduleDBResponse(BaseModel):
     startCity: str
     endCity: str
@@ -82,6 +91,7 @@ class ScheduleDBResponse(BaseModel):
         allow_population_by_field_name = True
         allow_population_by_alias = True
 
+# 스케줄 수정 요청
 class ScheduleUpdate(BaseModel):
     startCity: Optional[str]
     endCity: Optional[str]
@@ -95,10 +105,19 @@ class ScheduleUpdate(BaseModel):
         allow_population_by_field_name = True
         allow_population_by_alias = True
 
+class RestaurantPlace(BaseModel):
+    name: str
+    aiFoodComment: str
+    tags: List[str]
+    placeId: int
+    imageUrl: str  # 이미지 URL 추가
+
+# 로그인 토큰 응답
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+# 예산 응답
 class BudgetResponse(BaseModel):
     id: int
     schedule_id: int
@@ -109,23 +128,26 @@ class BudgetResponse(BaseModel):
     created_at: str 
 
     class Config:
-        orm_mode = True  # Pydantic 모델로 변환
+        orm_mode = True
 
-# 예산요청 스키마
+# 예산 요청 (예: 일정에 포함된 장소 목록)
 class ScheduleItem(BaseModel):
-    place_id: str  
+    place_id: str
     time: Optional[str] = None
     placeType: Optional[str] = None
-    place: Optional[str] = None  
+    place: Optional[str] = None
 
+# 예산 요청 본문
 class PlanBudgetRequest(BaseModel):
     plans: Dict[str, List[ScheduleItem]]
 
+# 예산 응답 카테고리
 class CategoryBreakdown(BaseModel):
     교통: int
     식비: int
     관광: int
 
+# 예산 응답 전체
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
     categoryBreakdown: CategoryBreakdown
