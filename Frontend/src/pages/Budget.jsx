@@ -18,15 +18,21 @@ const BudgetResultPage = () => {
   const [aiComment, setAiComment] = useState("");
   const [peopleCount, setPeopleCount] = useState(0);
 
+  // TODO: API Request에 endCity 추가
   useEffect(() => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
     if (storedStyle) {
-      setEndCity(storedStyle.destination || "");
+      setEndCity(storedStyle.endCity || "");
       setDateRange(`${storedStyle.startDate} ~ ${storedStyle.endDate}`);
     }
 
     const travelPlan = JSON.parse(localStorage.getItem("travelPlan"));
     if (travelPlan) {
+      // endCity 추가
+      if (storedStyle && storedStyle.endCity) {
+        travelPlan.endCity = storedStyle.endCity;
+      }
+
       if (travelPlan.peopleCount) {
         setPeopleCount(travelPlan.peopleCount);
       }
