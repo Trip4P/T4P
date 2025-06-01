@@ -142,5 +142,5 @@ class CategoryItem(BaseModel):
 
 class BudgetResponse(BaseModel):
     totalBudget: int
-    categoryBreakdown: List[Dict[str, int]]  # key가 카테고리명, value가 금액인 dict 리스트
+    categoryBreakdown: List[Dict[str, int]] 
     aiComment: str
