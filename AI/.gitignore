@@ -1,0 +1,6 @@
+# 파이썬 컴파일된 파일 무시
+__pycache__/
+*.py[cod]
+
+# 특정 폴더 아래 pycache 무시
+AI/__pycache__/

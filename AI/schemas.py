@@ -1,7 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any
-from datetime import date
-from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     username: str
@@ -35,8 +33,10 @@ class ScheduleCreate(BaseModel):
     endDate: str
     emotions: List[str]
     companions: Optional[List[str]] = []
-    food_types: List[str]
-    region: str
+    peopleCount: Optional[int] = 1
+    aiEmpathy: Optional[str] = None
+    tags: Optional[List[str]] = []
+    plans: Optional[Dict[str, Any]] = {}
     schedule_json: Optional[Dict[str, Any]] = {}
 
     class Config:
@@ -44,12 +44,20 @@ class ScheduleCreate(BaseModel):
         allow_population_by_alias = True
 
 class PlaceInfo(BaseModel):
-    name: str
-    place_id: Optional[str] = None
-    description: Optional[str] = None
+    time: Optional[str]
+    name: str = Field(..., alias="place")  # GPT에서 place로 옴
+    place_id: Optional[int] = Field(None, alias="placeId")
+    aiComment: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
+
+class DayPlan(BaseModel):
+    schedule: List[PlaceInfo]
 
 class ScheduleResponse(BaseModel):
-    schedule: Dict[str, List[PlaceInfo]]
+    aiEmpathy: Optional[str] = ""
+    tags: Optional[List[str]] = []
+    plans: Dict[str, DayPlan] = Field(default_factory=dict)
 
     class Config:
         allow_population_by_field_name = True
@@ -62,6 +70,11 @@ class ScheduleDBResponse(BaseModel):
     endDate: str
     userEmotion: List[str]
     with_: List[str] = Field(..., alias="companions")
+    food_types: List[str]
+    region: Optional[str] = None
+    aiEmpathy: Optional[str] = None
+    tags: Optional[List[str]] = []
+    plans: Optional[Dict[str, Any]] = {}
     schedule_json: Optional[Dict[str, Any]]
 
     class Config:
@@ -76,7 +89,7 @@ class ScheduleUpdate(BaseModel):
     endDate: Optional[str]
     userEmotion: Optional[List[str]]
     with_: Optional[List[str]] = Field(None, alias="companions")
-    schedule_json: Optional[str]
+    schedule_json: Optional[Dict[str, Any]]
 
     class Config:
         allow_population_by_field_name = True
@@ -96,9 +109,9 @@ class BudgetResponse(BaseModel):
     created_at: str 
 
     class Config:
-        orm_mode = True  #Pydantic 모델로 변환
+        orm_mode = True  # Pydantic 모델로 변환
 
-#예산요청 스키마
+# 예산요청 스키마
 class ScheduleItem(BaseModel):
     place_id: str  
     time: Optional[str] = None
@@ -116,6 +129,3 @@ class CategoryBreakdown(BaseModel):
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
     categoryBreakdown: CategoryBreakdown
-    aiComment: str
-
-        
