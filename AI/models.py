@@ -56,6 +56,7 @@ class Destination(Base):
     opening_periods = Column(JSON)
     latitude = Column(Float)
     longitude = Column(Float)
+    keywords = Column(Text) 
 
 class Meal(Base):
     __tablename__ = 'meals'
@@ -85,6 +86,8 @@ class Meal(Base):
     opening_periods = Column(JSON)
     latitude = Column(Float)
     longitude = Column(Float)
+    keywords = Column(Text)  
+
 
 class Budget(Base):
     __tablename__ = 'budget'
