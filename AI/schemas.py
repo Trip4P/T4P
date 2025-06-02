@@ -110,9 +110,9 @@ class PlanBudgetRequest(BaseModel):
     plans: Dict[str, List[ScheduleItem]]
 
 class CategoryBreakdown(BaseModel):
-    food: int
-    transport: int
-    activities: int
+    식비: int
+    교통: int
+    관광: int
 
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
