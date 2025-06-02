@@ -118,7 +118,7 @@ class Token(BaseModel):
     token_type: str
 
 # 예산 응답
-class BudgetResponse(BaseModel):
+class DBBudgetResponse(BaseModel):
     id: int
     schedule_id: int
     food_cost: int

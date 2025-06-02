@@ -32,9 +32,9 @@ def quick_budget_api(
         return {
             "totalBudget": result["total_cost"],
             "categoryBreakdown": {
-                "food": result["food_cost"],
-                "transport": result["transport_cost"],
-                "activities": result["entry_fees"],
+                "식비": result["food_cost"],
+                "교통": result["transport_cost"],
+                "관광": result["entry_fees"],
             },
             "aiComment": result["comment"]
         }
