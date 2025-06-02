@@ -13,6 +13,7 @@ def calculate_budget_from_schedule_data(request: BudgetRequest, db: Session = De
 
     category_dict = {
         "교통": raw_result["transport_cost"],
+        "숙소": raw_result["accommodation_cost"],
         "식비": raw_result["food_cost"],
         "관광": raw_result["entry_fees"]
     }

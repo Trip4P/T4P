@@ -6,7 +6,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from openai import OpenAI
 import requests
-
+from schemas import BudgetRequest 
 import sys
 import os
 
@@ -17,9 +17,7 @@ if BASE_DIR not in sys.path:
 
 import models
 
-from models import Budget
 
-# 설정값
 from config import settings
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -164,13 +162,12 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def ask_gpt_budget_comment(user_budget: int, region_names: List[str], days: int = 2, num_people: int = 1) -> str:
-    region_str = ", ".join(region_names)
+def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_people: int = 1) -> str:
     prompt = f"""
-{region_str} 지역을 {days}일 동안 {num_people}명이 여행하는 일정이에요.
+{end_city} 지역을 {days}일 동안 {num_people}명이 여행하는 일정이에요.
 추천된 여행 코스를 기준으로 예상 여행 비용은 총 {user_budget}원이에요.
 
-이 금액이 해당 지역(예: 서울시가 아닌 {region_str} 같은 행정구 기준)의 평균 여행 비용과 비교해서
+이 금액이 해당 지역(예: 서울시가 아닌 {end_city} 같은 행정구 기준)의 평균 여행 비용과 비교해서
 비싸 보이는지, 적당한지, 저렴해 보이는지를 짧게 감성적으로 평가해줘. 그 해당 지역의 평균 여행 비용도 언급해줘.
 
 👉 "~같아요", "~일 것 같아요", "~하면 좋겠어요"처럼 부드러운 말투로.
@@ -196,43 +193,32 @@ def ask_gpt_budget_comment(user_budget: int, region_names: List[str], days: int 
         return "예산 분석에 실패했어요. 다음에 다시 시도해 주세요."
 
 
-def calculate_total_budget_from_plan(db: Session, plan_data) -> Dict:
+def calculate_total_budget_from_plan(db: Session, plan_data: BudgetRequest) -> Dict:
     num_people = plan_data.peopleCount
 
     food_cost = calculate_food_cost(plan_data, num_people)
     entry_fees = estimate_entry_fees(plan_data, num_people)
     transport_cost = calculate_transport_cost(plan_data, num_people)
-    total_cost = food_cost + entry_fees + transport_cost
 
-    region_names = []
-    seen = set()
-    for day_plan in plan_data.plans:
-        for item in day_plan.schedule:
-            place_id = item.placeId
-            if not place_id:
-                continue
-            place_id_str = str(place_id)
-            place = (
-                db.query(models.Destination).filter(models.Destination.place_id == place_id_str).first()
-                or db.query(models.Meal).filter(models.Meal.place_id == place_id_str).first()
-            )
-            if place:
-                area = getattr(place, "area", None)
-                if area and area not in seen:
-                    region_names.append(area)
-                    seen.add(area)
+    accommodation_cost = 0  # 숙박비 0원 처리
+
+    total_cost = food_cost + entry_fees + transport_cost + accommodation_cost
+
+    # 지역 이름은 endCity만 사용
+    end_city = plan_data.endCity if hasattr(plan_data, "endCity") and plan_data.endCity else "여행지"
 
     budget_comment = ask_gpt_budget_comment(
-        total_cost,
-        region_names,
+        user_budget=total_cost,
+        end_city=end_city,
         days=len(plan_data.plans),
         num_people=num_people
     )
 
-    budget_data = {
+    return {
         "food_cost": food_cost,
         "entry_fees": entry_fees,
         "transport_cost": transport_cost,
+        "accommodation_cost": accommodation_cost,
         "total_cost": total_cost,
         "comment": budget_comment
     }

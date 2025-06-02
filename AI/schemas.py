@@ -118,7 +118,7 @@ class Token(BaseModel):
     token_type: str
 
 # 예산 응답
-class BudgetResponse(BaseModel):
+class DBBudgetResponse(BaseModel):
     id: int
     schedule_id: int
     food_cost: int
@@ -143,9 +143,9 @@ class PlanBudgetRequest(BaseModel):
 
 # 예산 응답 카테고리
 class CategoryBreakdown(BaseModel):
-    food: int
-    transport: int
-    activities: int
+    식비: int
+    교통: int
+    관광: int
 
 class PlanBudgetResponse(BaseModel):
     totalBudget: int
