@@ -1,10 +1,10 @@
 // 여행 일정 추천하고 자동으로 예산 짜주는 페이지 (시나리오A)
 import { Doughnut } from "react-chartjs-2";
 import axios from "axios";
-// import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import Header from "../components/Header";
+import LoadingSpinner from "../components/LoadingSpinner";
 import Footer from "../components/Footer";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -17,6 +17,7 @@ const BudgetResultPage = () => {
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
   const [aiComment, setAiComment] = useState("");
   const [peopleCount, setPeopleCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
@@ -26,6 +27,7 @@ const BudgetResultPage = () => {
     }
 
     const travelPlan = JSON.parse(localStorage.getItem("travelPlan"));
+    console.log("travelPlan: " + travelPlan);
     if (travelPlan) {
       // endCity 추가
       if (storedStyle && storedStyle.endCity) {
@@ -36,15 +38,26 @@ const BudgetResultPage = () => {
         setPeopleCount(travelPlan.peopleCount);
       }
       axios
-        .post("/api/schedules/budgets", travelPlan)
+        .post("http://127.0.0.1:8000/api/schedules/budgets", travelPlan)
         .then((res) => {
           setTotalBudget(res.data.totalBudget);
           setCategoryBreakdown(res.data.categoryBreakdown);
           setAiComment(res.data.aiComment);
+          setIsLoading(false);
         })
-        .catch((err) => console.error("예산 요청 실패", err));
+        .catch((err) => {
+          console.error("예산 요청 실패", err)
+          setIsLoading(false);
+        });
     }
   }, []);
+
+  if (isLoading) return (
+    <>
+      <Header />
+      <LoadingSpinner />
+    </>
+  )
 
   const chartLabels = categoryBreakdown.map((item) => Object.keys(item)[0]);
   const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
@@ -67,16 +80,6 @@ const BudgetResultPage = () => {
       },
     ],
   };
-
-  // useEffect(() => {
-  //   const stored = JSON.parse(localStorage.getItem("travelStyle"));
-  //   if (stored) {
-  //     setDestination(stored.destination || "");
-  //     setDateRange(`${stored.startDate} ~ ${stored.endDate}`);
-  //   }
-  // }, []);
-
-  // const navigate = useNavigate();
 
   return (
     <>

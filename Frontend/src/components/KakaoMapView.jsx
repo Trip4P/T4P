@@ -6,11 +6,14 @@ const KakaoMapView  = ({ places }) => {
   const kakaoApiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
 
   useEffect(() => {
+    if (!mapRef.current) return; 
+
     const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoApiKey}&autoload=false&libraries=clusterer`;
     script.async = true;
 
     script.onload = () => {
+      if (!window.kakao || !mapRef.current) return;
       window.kakao.maps.load(() => {
         const map = new window.kakao.maps.Map(mapRef.current, {
           center: new window.kakao.maps.LatLng(37.5665, 126.9780),
