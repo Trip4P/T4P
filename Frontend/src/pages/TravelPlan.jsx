@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
-import GoogleMapView from "../components/GoogleMapView";
+import Footer from "../components/Footer";
+//import GoogleMapView from "../components/GoogleMapView";
 import PlaceDetailPage from "./PlaceDetail";
+import KakaoMapView  from "../components/KakaoMapView";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
@@ -52,19 +54,35 @@ export default function TravelPlan() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await axios.get("/api/travel-plan");
         const stored = JSON.parse(localStorage.getItem("travelStyle"));
-
+        
         if (!stored) {
           console.warn("로컬 스토리지에 사용자 성향 정보 없음");
           return;
         }
 
+        const res = await axios.post("http://127.0.0.1:8000/ai/schedule/", {
+          startCity: stored.startCity,
+          endCity: stored.endCity,
+          startDate: stored.startDate,
+          endDate: stored.endDate,
+          emotions: stored.emotions,
+          companions: stored.companions,
+          peopleCount: stored.peopleCount
+        });
+
         setStartDate(stored.startDate);
         setEndDate(stored.endDate);
         setTags(res.data.tags || []);
         setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
-        setPlans(res.data.plans || []);
+
+        // 🔐 방어 코드
+      if (Array.isArray(res.data.plans)) {
+        setPlans(res.data.plans);
+      } else {
+        console.warn("plans가 배열이 아닙니다:", res.data.plans);
+        setPlans([]);
+      }
 
       } catch (err) {
         console.error("에러 발생", err);
@@ -125,13 +143,13 @@ export default function TravelPlan() {
         {/* Schedule */}
         {plans
           .find((plan) => plan.day === activeDay)
-          ?.schedule.map((item, idx) => (
+          ?.schedule?.map((item, idx) => (
             <div key={idx} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-blue-700 font-semibold">{item.time}</span>
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
+                {/* <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
                   {item.placeType}
-                </span>
+                </span> */}
               </div>
               <h3 className="text-lg font-bold">{item.place}</h3>
               <p className="text-sm text-blue-700">{item.aiComment}</p>
@@ -154,8 +172,9 @@ export default function TravelPlan() {
           ))}
 
         <div className="google-map">
-          <h2>동선 추천</h2>
-          <GoogleMapView places={places} />
+          <h2 className="text-xl font-semibold mb-2">동선 추천</h2>
+          <KakaoMapView places={places} />
+          {/* <GoogleMapView places={places} /> */}
         </div>
 
         {/* Bottom Buttons */}
@@ -181,6 +200,7 @@ export default function TravelPlan() {
           {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
+      <Footer />
     </>
   );
 }

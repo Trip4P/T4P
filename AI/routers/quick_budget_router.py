@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/budgets", tags=["budgets"])
 
-
 @router.post("", response_model=schemas.PlanBudgetResponse)
 def quick_budget_api(
     startCity: str = Body(...),

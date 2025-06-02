@@ -1,14 +1,65 @@
 import re
 import json
-from openai import OpenAI
-from config import settings
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+from typing import List, Optional
 
-# OpenAI 클라이언트 초기화
+from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from openai import OpenAI
+
+from config import settings
+
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-# 감정 → 스타일 매핑
+engine = create_engine(settings.DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# --- Pydantic 모델 ---
+class ScheduleRequest(BaseModel):
+    startCity: str
+    endCity: str
+    startDate: str
+    endDate: str
+    emotions: List[str]
+    companions: List[str]
+    peopleCount: int
+
+class SchedulePlanItem(BaseModel):
+    time: Optional[str]
+    place: Optional[str]
+    placeId: Optional[int]
+    aiComment: Optional[str]
+    latitude: Optional[float]
+    longitude: Optional[float]
+
+class ScheduleDayPlan(BaseModel):
+    day: int
+    schedule: List[SchedulePlanItem]
+
+class ScheduleAIResponse(BaseModel):
+    aiEmpathy: Optional[str]
+    tags: Optional[List[str]]
+    plans: List[ScheduleDayPlan]
+
+class ScheduleAPIResponse(BaseModel):
+    startCity: str
+    endCity: str
+    startDate: str
+    endDate: str
+    emotions: List[str]
+    companions: List[str]
+    peopleCount: int
+    aiResult: ScheduleAIResponse
+
+# --- 감정 → 스타일 매핑 ---
 EMOTION_TO_STYLE = {
     "기쁜": ["style_activity", "style_hotplace", "style_photo", "style_shopping"],
     "설레는": ["style_date", "style_culture", "style_exotic", "style_landmark", "style_photo"],
@@ -21,13 +72,13 @@ EMOTION_TO_STYLE = {
     "힐링": ["style_healing", "style_nature", "style_quiet"],
 }
 
-def map_emotions_to_styles(emotions):
+def map_emotions_to_styles(emotions: List[str]) -> List[str]:
     styles = set()
     for emo in emotions:
         styles.update(EMOTION_TO_STYLE.get(emo, []))
     return list(styles)
 
-def generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions):
+def generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions, peopleCount) -> str:
     emotion_str = ", ".join(emotions)
     companions_str = ", ".join(companions)
     return (
@@ -35,149 +86,96 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date, emotion
         f"도착지: {end_city}\n"
         f"여행 기간: {start_date}부터 {end_date}까지\n"
         f"사용자 감정: {emotion_str}\n"
-        f"동행인: {companions_str}\n\n"
-        "이 정보를 기반으로 사용자에게 맞춤형 여행 일정을 추천해줘.\n"
-        "각 날짜(day1, day2, ...) 별로 관광지(sights) 및 점심(lunch), 저녁(dinner)을 반드시 포함하되, "
-        "값이 없으면 빈 리스트([])로 표시해줘.\n\n"
-        "아래 예시처럼 반드시 정확한 JSON 형식으로 코드블록만 출력해야 하며, "
-        "중복 키나 문법 오류가 없도록 해주세요.\n\n"
+        f"동행인: {companions_str}\n"
+        f"인원 수: {peopleCount}명\n\n"
+        "이 정보를 바탕으로 사용자에게 맞춤형 여행 일정을 추천해줘. 결과는 반드시 JSON 형식으로 출력해야 하며, 다음 조건을 따라야 해:\n\n"
+        "1. \"aiEmpathy\": 사용자 감정에 공감하는 한 문장\n"
+        "2. \"tags\": 여행을 대표하는 키워드 4개\n"
+        "3. \"plans\": 반드시 **리스트(List)** 형식으로 작성된 각 날짜별 일정 정보\n\n"
+        "⚠️ 절대로 {\"day1\": {...}, \"day2\": {...}} 같은 객체(Dictionary) 형태로 작성하지 말 것\n\n"
+        "각 plans 항목은 다음과 같은 구조여야 함:\n"
+        "- day: 날짜 숫자\n"
+        "- schedule: 하루 일정 리스트. 각 일정 항목은 다음 필드 포함:\n"
+        "  - time, place, placeId, aiComment, latitude, longitude\n\n"
         "예시:\n"
         "```json\n"
         "{\n"
-        "  \"day1\": {\n"
-        "    \"sights\": [\n"
-        "      {\"name\": \"명소1\", \"place_id\": \"abcd1234\"}\n"
-        "    ],\n"
-        "    \"lunch\": [\n"
-        "      {\"name\": \"식당1\", \"place_id\": \"efgh5678\"}\n"
-        "    ],\n"
-        "    \"dinner\": []\n"
-        "  },\n"
-        "  \"day2\": {\n"
-        "    \"sights\": [],\n"
-        "    \"lunch\": [],\n"
-        "    \"dinner\": []\n"
-        "  }\n"
+        "  \"aiEmpathy\": \"힐링과 즐거움을 모두 느낄 수 있는 여행을 준비했어요!\",\n"
+        "  \"tags\": [\"힐링\", \"자연\", \"맛집\", \"여유\"],\n"
+        "  \"plans\": [\n"
+        "    {\n"
+        "      \"day\": 1,\n"
+        "      \"schedule\": [\n"
+        "        {\n"
+        "          \"time\": \"09:00\",\n"
+        "          \"place\": \"호텔 부산\",\n"
+        "          \"placeId\": 123,\n"
+        "          \"aiComment\": \"여유로운 하루의 시작\",\n"
+        "          \"latitude\": 35.1531,\n"
+        "          \"longitude\": 129.0604\n"
+        "        }\n"
+        "      ]\n"
+        "    }\n"
+        "  ]\n"
         "}\n"
         "```\n"
-        "이 형식을 꼭 지켜서 JSON 코드블록만 응답해줘."
-        "반드시 올바른 JSON 형식의 코드블록만 출력하고, 중복 키나 문법 오류가 없도록 해주세요."
+        "이 구조를 반드시 그대로 따를 것!"
     )
 
-def extract_json_from_ai_response(ai_response_text):
-    # AI 응답에서 ```json ... ``` 코드블록 안의 JSON 추출
-    pattern = r"```json\s*(.*?)```"
+def extract_json_from_ai_response(ai_response_text: str) -> dict:
+    pattern = r"```json\s*(\{.*?\})\s*```"
     match = re.search(pattern, ai_response_text, re.DOTALL)
-    if match:
-        json_str = match.group(1).strip()
-    else:
-        # 코드블록 없으면 전체 텍스트 시도
-        json_str = ai_response_text.strip()
-
+    json_str = match.group(1).strip() if match else ai_response_text.strip()
     try:
         return json.loads(json_str)
     except json.JSONDecodeError as e:
-        raise ValueError(f"JSON 파싱 실패: {e}\n원본: {json_str}")
+        raise ValueError(f"JSON 파싱 실패: {e}\n원본:\n{json_str[:300]}...")
 
-def normalize_schedule_format(schedule):
-    """
-    AI가 반환한 스케줄이
-    - dayN: list (잘못된 경우)면 -> dayN: {sights: [], lunch: [], dinner: []}
-    - dayN: dict 인 경우 누락된 키 보완
-    """
-    for day_key, day_value in list(schedule.items()):
-        if isinstance(day_value, list):
-            # 리스트면, 빈 dict로 바꾸고, 리스트에 실제 장소가 있으면 sights로 넣기
-            normalized = {"sights": [], "lunch": [], "dinner": []}
-            for item in day_value:
-                if isinstance(item, dict) and "name" in item and "place_id" in item:
-                    normalized["sights"].append({
-                        "name": item["name"],
-                        "place_id": item.get("place_id", "")
-                    })
-            schedule[day_key] = normalized
-        elif isinstance(day_value, dict):
-            # dict일 때 각 카테고리가 리스트인지 체크, 아니면 빈 리스트로 보완
-            for category in ["sights", "lunch", "dinner"]:
-                if category not in day_value or not isinstance(day_value[category], list):
-                    day_value[category] = []
-                else:
-                    filtered = []
-                    for place in day_value[category]:
-                        if isinstance(place, dict) and "name" in place and "place_id" in place:
-                            filtered.append({
-                                "name": place["name"],
-                                "place_id": place.get("place_id", "")
-                            })
-                    day_value[category] = filtered
-        else:
-            # dict/list 둘 다 아니면 빈 구조로 초기화
-            schedule[day_key] = {"sights": [], "lunch": [], "dinner": []}
+def normalize_schedule_format(response_json: dict) -> ScheduleAIResponse:
+    import re
 
-    return schedule
+    raw_plans = response_json.get("plans")
+    if not raw_plans:
+        raise ValueError("plans 데이터가 존재하지 않습니다.")
 
-def recommend_restaurants(db: Session, food_types, region):
-    sql = text("""
-        SELECT name, food_type, area, rating, review_count, image_url, place_id
-        FROM meals
-        WHERE food_type = ANY(:food_types)
-          AND area ILIKE :region
-        ORDER BY rating DESC
-        LIMIT 20;
-    """)
-    result = db.execute(sql, {"food_types": food_types, "region": f"%{region}%"}).fetchall()
-    return [dict(row) for row in result]
+    plans_list = []
 
-def distribute_restaurants_to_days(schedule):
-    """
-    schedule에서 "restaurants" 키가 있으면 각 day의 lunch/dinner에 균등 분배
-    description 없이 name, place_id만 사용
-    """
-    restaurants = schedule.pop("restaurants", [])
-    day_keys = sorted(schedule.keys())
-    num_days = len(day_keys)
-    if num_days == 0 or not restaurants:
-        return
+    if isinstance(raw_plans, dict):
+        # dict -> 리스트 변환
+        for day_key in sorted(raw_plans.keys(), key=lambda x: int(re.sub(r"\D", "", x))):
+            day_data = raw_plans[day_key]
+            plans_list.append(ScheduleDayPlan(
+                day=int(re.sub(r"\D", "", day_key)),
+                schedule=[SchedulePlanItem(**item) for item in day_data.get("schedule", [])]
+            ))
+    elif isinstance(raw_plans, list):
+        # 리스트일 경우 각 항목을 Pydantic 객체로 변환
+        for day_item in raw_plans:
+            plans_list.append(ScheduleDayPlan(
+                day=day_item.get("day"),
+                schedule=[SchedulePlanItem(**item) for item in day_item.get("schedule", [])]
+            ))
+    else:
+        raise ValueError("plans 형식이 유효하지 않습니다.")
 
-    # 각 day가 dict형태인지 확인 및 기본값 보장
-    for day in day_keys:
-        if not isinstance(schedule[day], dict):
-            schedule[day] = {"sights": [], "lunch": [], "dinner": []}
-        for category in ["sights", "lunch", "dinner"]:
-            if category not in schedule[day] or not isinstance(schedule[day][category], list):
-                schedule[day][category] = []
+    return ScheduleAIResponse(
+        aiEmpathy=response_json.get("aiEmpathy", ""),
+        tags=response_json.get("tags", []),
+        plans=plans_list
+    )
 
-    total_meals = len(restaurants)
-    meals_per_day = (total_meals // (num_days * 2)) * 2
-    if meals_per_day == 0 and total_meals > 0:
-        meals_per_day = min(2, total_meals)  # 최소 하루 2개는 배분
-
-    idx = 0
-    for day in day_keys:
-        lunch_count = dinner_count = meals_per_day // 2
-        lunch_places = restaurants[idx: idx + lunch_count]
-        idx += lunch_count
-        dinner_places = restaurants[idx: idx + dinner_count]
-        idx += dinner_count
-
-        schedule[day]["lunch"] = [{"name": r["name"], "place_id": r.get("place_id", "")} for r in lunch_places]
-        schedule[day]["dinner"] = [{"name": r["name"], "place_id": r.get("place_id", "")} for r in dinner_places]
-
-    # 남은 음식점 있으면 점심에 추가 분배
-    while idx < total_meals:
-        for day in day_keys:
-            if idx >= total_meals:
-                break
-            schedule[day]["lunch"].append({
-                "name": restaurants[idx]["name"],
-                "place_id": restaurants[idx].get("place_id", "")
-            })
-            idx += 1
-
-def get_ai_schedule(db: Session, start_city, end_city, start_date, end_date, emotions, companions, food_types, region):
-    styles = map_emotions_to_styles(emotions)  # 필요시 프롬프트 반영 가능
-
-    prompt = generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions)
+def get_ai_schedule(
+    db: Session,
+    start_city: str,
+    end_city: str,
+    start_date: str,
+    end_date: str,
+    emotions: List[str],
+    companions: List[str],
+    peopleCount: int
+) -> ScheduleAIResponse:
+    styles = map_emotions_to_styles(emotions)
+    prompt = generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions, peopleCount)
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -185,51 +183,47 @@ def get_ai_schedule(db: Session, start_city, end_city, start_date, end_date, emo
             {"role": "system", "content": "You are a helpful travel itinerary planner."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=1500,
+        max_tokens=2000,
         temperature=0.7,
     )
 
-    full_text = response.choices[0].message.content
-    print("GPT 응답 내용:\n", full_text)
+    raw_text = response.choices[0].message.content
+    print("GPT 응답:\n", raw_text)
 
-    # AI 응답에서 JSON 추출 및 파싱
-    schedule_json = extract_json_from_ai_response(full_text)
+    json_data = extract_json_from_ai_response(raw_text)
+    normalized = normalize_schedule_format(json_data)
 
-    # AI 응답 일정 구조 정규화
-    schedule_json = normalize_schedule_format(schedule_json)
-
-    # DB에서 음식점 추천
-    restaurants = recommend_restaurants(db, food_types, region)
-    schedule_json["restaurants"] = restaurants
-
-    # 음식점 분배
-    distribute_restaurants_to_days(schedule_json)
-
-    return schedule_json
-
-
-# 테스트용 실행 코드
-if __name__ == "__main__":
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-
-    engine = create_engine(settings.DATABASE_URL)
-    SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
-
-    start_city = "서울"
-    end_city = "부산"
-    start_date = "2025-06-01"
-    end_date = "2025-06-03"
-    emotions = ["기쁜", "힐링"]
-    companions = ["친구"]
-    food_types = ["한식", "카페"]
-    region = "부산"
-
-    schedule = get_ai_schedule(
-        db, start_city, end_city, start_date, end_date,
-        emotions, companions, food_types, region
+    return ScheduleAIResponse(
+        aiEmpathy=normalized.aiEmpathy,
+        tags=normalized.tags,
+        plans=normalized.plans
     )
 
-    import pprint
-    pprint.pprint(schedule)
+# --- FastAPI 엔드포인트 ---
+app = FastAPI()
+
+@app.post("/api/schedule", response_model=ScheduleAPIResponse)
+def create_schedule(request: ScheduleRequest, db: Session = Depends(get_db)):
+    try:
+        ai_result = get_ai_schedule(
+            db=db,
+            start_city=request.startCity,
+            end_city=request.endCity,
+            start_date=request.startDate,
+            end_date=request.endDate,
+            emotions=request.emotions,
+            companions=request.companions,
+            peopleCount=request.peopleCount
+        )
+        return ScheduleAPIResponse(
+            startCity=request.startCity,
+            endCity=request.endCity,
+            startDate=request.startDate,
+            endDate=request.endDate,
+            emotions=request.emotions,
+            companions=request.companions,
+            peopleCount=request.peopleCount,
+            aiResult=ai_result
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI 호출 또는 파싱 실패: {str(e)}")
