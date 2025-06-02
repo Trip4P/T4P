@@ -24,11 +24,6 @@ export default function MainPage() {
           </Link>
           </button>
         </div>
-        <img
-          src="https://via.placeholder.com/400x250"
-          alt="hero"
-          className="mt-8 lg:mt-0 lg:ml-16 rounded"
-        />
       </section>
 
       {/* Features */}
