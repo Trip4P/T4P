@@ -7,13 +7,19 @@ import axios from "axios";
 
 export default function PlaceDetailPage() {
   const location = useLocation();
-  const { placeId } = location.state;
+  const { state } = useLocation();
+  const { placeId, emotions, companions, peopleCount } = state || {};
   const [placeData, setPlaceData] = useState(null);
 
   useEffect(() => {
     async function fetchPlaceDetail() {
       try {
-        const response = await axios.get(`/api/place-detail/${placeId}`);
+        const response = await axios.post("http://127.0.0.1:8000/api/place-detail", {
+          placeId: placeId,
+          emotions: emotions,
+          companions: companions,
+          peopleCount: peopleCount
+        });
         setPlaceData(response.data);
       } catch (error) {
         console.error("Failed to fetch place detail:", error);
@@ -58,14 +64,18 @@ export default function PlaceDetailPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm text-gray-700 mb-6">
-            <div>
-              <p className="font-semibold">영업시간</p>
-              <p>{placeData.businessHours}</p>
-            </div>
-            <div>
-              <p className="font-semibold">가격대</p>
-              <p>{placeData.price}</p>
-            </div>
+            {placeData.placeType !== "destination" && (
+              <>
+                <div>
+                  <p className="font-semibold">영업시간</p>
+                  <p>{placeData.businessHours}</p>
+                </div>
+                <div>
+                  <p className="font-semibold">가격대</p>
+                  <p>{placeData.price}</p>
+                </div>
+              </>
+            )}
             <div>
               <p className="font-semibold">주소</p>
               <p>{placeData.address}</p>
@@ -76,12 +86,14 @@ export default function PlaceDetailPage() {
                 <p>{placeData.phone}</p>
               </div>
             )}
-            <div>
-              <p className="font-semibold">평균 평점</p>
-              <p>
-                {placeData.averageRate} ({placeData.reviewCount}개 리뷰)
-              </p>
-            </div>
+            {placeData.placeType !== "destination" && (
+              <div>
+                <p className="font-semibold">평균 평점</p>
+                <p>
+                  {placeData.averageRate} ({placeData.reviewCount}개 리뷰)
+                </p>
+              </div>
+            )}
           </div>
 
           {/* AI 추천 포인트 */}

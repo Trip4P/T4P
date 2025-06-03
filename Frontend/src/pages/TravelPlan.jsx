@@ -17,8 +17,7 @@ export default function TravelPlan() {
   const [plans, setPlans] = useState([]);
   const [activeDay, setActiveDay] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-
-  // const days = ["DAY 1", "DAY 2", "DAY 3"];
+  const [travelStyle, setTravelStyle] = useState(null);
 
   // const places = [
   //   {
@@ -64,6 +63,8 @@ export default function TravelPlan() {
           setIsLoading(false);
           return;
         }
+
+        setTravelStyle(stored);
 
         const res = await axios.post("http://127.0.0.1:8000/ai/schedule/", {
           startCity: stored.startCity,
@@ -178,7 +179,12 @@ export default function TravelPlan() {
                   className="bg-blue-200 text-blue-800 px-2 py-1 rounded"
                   onClick={() =>
                     navigate("/PlaceDetailPage", {
-                      state: { placeId: item.placeId },
+                      state: {
+                        placeId: item.placeId,
+                        emotions: travelStyle?.emotions,
+                        companions: travelStyle?.companions,
+                        peopleCount: travelStyle?.peopleCount,
+                       },
                     })
                   }
                 >
