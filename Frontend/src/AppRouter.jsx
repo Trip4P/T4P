@@ -9,6 +9,7 @@ import RestaurantInput from './pages/RestaurantInput.jsx'
 import RestaurantRecommend from './pages/RestaurantRecommend.jsx'
 import RestaurantDetail from './pages/RestaurantDetail.jsx'
 import Signup from './pages/Signup.jsx';
+import Login from './pages/Login.jsx';
 
 export default function AppRouter() {
   return (
@@ -24,6 +25,7 @@ export default function AppRouter() {
         <Route path="/RestaurantRecommend" element={<RestaurantRecommend />} />
         <Route path="/RestaurantDetail" element={<RestaurantDetail />} />
         <Route path="/Signup" element={<Signup />} />
+        <Route path="/Login" element={<Login />} />
       </Routes>
     </Router>
   )
