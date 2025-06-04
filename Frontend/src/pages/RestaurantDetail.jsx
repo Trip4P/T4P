@@ -7,12 +7,19 @@ import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function RestaurantDetailPage() {
   const location = useLocation();
-  const { placeId } = location.state || {};
+  const { placeId, companions, foodPreferences, atmospheres } = location.state || {};
   const [placeData, setPlaceData] = useState(null);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
   useEffect(() => {
   if (placeId) {
-    axios.get(`/api/food-places-detail/${placeId}`)
+    axios.post(`${VITE_API_BASE_URL}/api/food-places-detail`, {
+      placeId: placeId,
+      companions: companions,
+      foodPreferences: foodPreferences,
+      atmospheres: atmospheres
+    })
       .then((res) => {
         // 응답이 HTML이면 잘못된 응답 처리
         if (typeof res.data === "string" && res.data.includes("<!doctype html>")) {
@@ -28,9 +35,6 @@ export default function RestaurantDetailPage() {
       });
   }
 }, [placeId]);
-  
-  console.log("placeId:" + placeId);
-  console.log("placeData: " + placeData);
 
   if (!placeData)
     return (
