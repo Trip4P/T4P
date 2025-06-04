@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, Text, DateTime, 
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
+from pydantic import BaseModel
 
 class User(Base):
     __tablename__ = "users"
@@ -29,6 +30,18 @@ class Schedule(Base):
     people_count = Column(Integer, default=1)
 
     owner = relationship("User", back_populates="schedules")
+
+class Place(BaseModel):
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+    city: str
+    type: str  # 예: 'meal', 'destination', 'accommodation'
+
+    class Config:
+        from_attributes = True
+        validate_by_name = True
 
 class Destination(Base):
     __tablename__ = 'destinations'
@@ -85,6 +98,22 @@ class Meal(Base):
     opening_periods = Column(JSON)
     latitude = Column(Float)
     longitude = Column(Float)
+
+class Accommodation(Base):
+    __tablename__ = 'accommodations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    location = Column(Text)
+    rating = Column(Float)
+    phone_number = Column(String)
+    opening_hours = Column(Text)
+    image_url = Column(Text)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    place_id = Column(String, unique=True, index=True)
+
 
 class Budget(Base):
     __tablename__ = 'budget'
