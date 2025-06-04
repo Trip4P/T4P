@@ -24,7 +24,7 @@ const Header = () => {
           <Link to="/Login">로그인</Link>
         </button>
         <button className="text-sm bg-blue-600 text-white px-4 py-1 rounded">
-          회원가입
+          <Link to="/Signup">회원가입</Link>
         </button>
       </div>
     </header>
