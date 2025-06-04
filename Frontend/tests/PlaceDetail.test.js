@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import PlaceDetailPage from "../pages/PlaceDetail";
+import PlaceDetailPage from "../src/pages/PlaceDetail";
 import { MemoryRouter } from "react-router-dom";
 import axios from "axios";
 

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import TasteProfilePage from "../pages/RestaurantInput";
+import TasteProfilePage from "../src/pages/RestaurantInput";
 import { MemoryRouter } from "react-router-dom";
 
 describe("맛집 성향 테스트", () => {
