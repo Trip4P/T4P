@@ -19,6 +19,8 @@ const BudgetResultPage = () => {
   const [peopleCount, setPeopleCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
     if (storedStyle) {
@@ -38,7 +40,7 @@ const BudgetResultPage = () => {
         setPeopleCount(travelPlan.peopleCount);
       }
       axios
-        .post("http://127.0.0.1:8000/api/schedules/budgets", travelPlan)
+        .post(`${VITE_API_BASE_URL}/api/schedules/budgets`, travelPlan)
         .then((res) => {
           setTotalBudget(res.data.totalBudget);
           setCategoryBreakdown(res.data.categoryBreakdown);
@@ -63,7 +65,6 @@ const BudgetResultPage = () => {
   const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
 
   const data = {
-    // labels: ["숙소", "교통", "식비", "기타"],
     labels: chartLabels,
     datasets: [
       {
