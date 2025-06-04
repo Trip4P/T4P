@@ -12,13 +12,15 @@ export default function RestaurantRecommendationPage() {
   const [aiComment, setAiComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     const tasteProfile = JSON.parse(localStorage.getItem("tasteProfile")); // 로컬스토리지에 저장된 맛집 성향 가져오기
 
     if (tasteProfile) {
       setIsLoading(true);
       axios
-        .post("http://127.0.0.1:8000/ai/restaurant", {
+        .post(`${VITE_API_BASE_URL}/ai/restaurant`, {
           companion: tasteProfile.companions,
           foodPreference: tasteProfile.foodPreference,
           atmospheres: tasteProfile.atmospheres,

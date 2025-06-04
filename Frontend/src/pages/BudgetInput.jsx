@@ -56,6 +56,8 @@ export default function TravelBudgetInputPage() {
   const [aiComment, setAiComment] = useState("");
   const [totalBudget, setTotalBudget] = useState(null);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // 💰 더미 예산 데이터
   // const dummyBudgetData = {
   //   labels: ["항공", "숙박", "식비", "교통", "기타"],
@@ -93,7 +95,7 @@ export default function TravelBudgetInputPage() {
 
   const fetchBudgetData = async () => {
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/budgets", {
+      const res = await axios.post(`${VITE_API_BASE_URL}/api/budgets`, {
         startCity,
         endCity,
         startDate: formatDateKorean(startDate),

@@ -14,6 +14,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));

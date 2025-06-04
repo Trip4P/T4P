@@ -19,6 +19,8 @@ export default function TravelPlan() {
   const [isLoading, setIsLoading] = useState(false);
   const [travelStyle, setTravelStyle] = useState(null);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // const places = [
   //   {
   //     name: "경복궁",
@@ -66,7 +68,7 @@ export default function TravelPlan() {
 
         setTravelStyle(stored);
 
-        const res = await axios.post("http://127.0.0.1:8000/ai/schedule/", {
+        const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
           startCity: stored.startCity,
           endCity: stored.endCity,
           startDate: stored.startDate,

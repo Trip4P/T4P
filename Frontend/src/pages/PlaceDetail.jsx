@@ -6,15 +6,16 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 export default function PlaceDetailPage() {
-  const location = useLocation();
   const { state } = useLocation();
   const { placeId, emotions, companions, peopleCount } = state || {};
   const [placeData, setPlaceData] = useState(null);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   useEffect(() => {
     async function fetchPlaceDetail() {
       try {
-        const response = await axios.post("http://127.0.0.1:8000/api/place-detail", {
+        const response = await axios.post(`${VITE_API_BASE_URL}/api/place-detail`, {
           placeId: placeId,
           emotions: emotions,
           companions: companions,
