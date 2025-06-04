@@ -51,7 +51,7 @@ class ScheduleCreate(BaseModel):
 class PlaceInfo(BaseModel):
     time: Optional[str]
     name: str = Field(..., alias="place")
-    place_id: Optional[int] = Field(None, alias="placeId")
+    place_id: Optional[str] = Field(None, alias="placeId")
     aiComment: Optional[str]
     latitude: Optional[float]
     longitude: Optional[float]
