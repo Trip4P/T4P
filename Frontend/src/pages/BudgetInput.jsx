@@ -27,8 +27,11 @@ ChartJS.register(
 const generateColors = (count) => {
   const colors = [];
   for (let i = 0; i < count; i++) {
-    const hue = (i * 360) / count; // 색상환을 나눠서
-    colors.push(`hsl(${hue}, 70%, 60%)`);
+    // hue 범위를 파랑 계열로 제한 (약 180 ~ 250)
+    const hue = 180 + Math.floor(Math.random() * 70); // 180~250 사이 정수
+    const saturation = 70 + Math.floor(Math.random() * 10); // 70~80%
+    const lightness = 50 + Math.floor(Math.random() * 10); // 50~60%
+    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
   }
   return colors;
 };
