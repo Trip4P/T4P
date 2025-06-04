@@ -8,6 +8,7 @@ import BudgetInput from './pages/BudgetInput.jsx';
 import RestaurantInput from './pages/RestaurantInput.jsx'
 import RestaurantRecommend from './pages/RestaurantRecommend.jsx'
 import RestaurantDetail from './pages/RestaurantDetail.jsx'
+import Signup from './pages/Signup.jsx';
 
 export default function AppRouter() {
   return (
@@ -22,6 +23,7 @@ export default function AppRouter() {
         <Route path="/RestaurantInput" element={<RestaurantInput />} />
         <Route path="/RestaurantRecommend" element={<RestaurantRecommend />} />
         <Route path="/RestaurantDetail" element={<RestaurantDetail />} />
+        <Route path="/Signup" element={<Signup />} />
       </Routes>
     </Router>
   )
