@@ -4,11 +4,14 @@ from database import init_db
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from routers import restaurant_router
+from routers import mealdetail_router
+from routers import desinationdetail_router
 
 from routers import popular_router
 
 from routers.budget_router import router as budget_router
 from routers.quick_budget_router import router as quick_budget_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,6 +29,8 @@ app.include_router(ai_router.router)
 app.include_router(restaurant_router.router)
 app.include_router(budget_router)
 app.include_router(quick_budget_router)
+app.include_router(mealdetail_router.router)
+app.include_router(desinationdetail_router.router)
 
 app.add_middleware(
     CORSMiddleware,
