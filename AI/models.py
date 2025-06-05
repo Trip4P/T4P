@@ -112,21 +112,6 @@ class Accommodation(Base):
 
     reviews = relationship("Review", back_populates="accommodation")
 
-class Accommodation(Base):
-    __tablename__ = 'accommodations'
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    location = Column(Text)
-    rating = Column(Float)
-    phone_number = Column(String)
-    opening_hours = Column(Text)
-    image_url = Column(Text)
-    latitude = Column(Float)
-    longitude = Column(Float)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    place_id = Column(String, unique=True, index=True)
-
 
 class Budget(Base):
     __tablename__ = 'budget'
