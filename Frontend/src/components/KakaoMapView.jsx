@@ -6,7 +6,7 @@ const KakaoMapView  = ({ places }) => {
   const kakaoApiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
 
   useEffect(() => {
-    if (!mapRef.current) return; 
+    if (!mapRef.current || places.length === 0) return; 
 
     const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoApiKey}&autoload=false&libraries=clusterer`;
@@ -100,6 +100,18 @@ const KakaoMapView  = ({ places }) => {
         }
       });
     };
+
+  console.log("places prop:", places);
+  console.log("Kakao API Key:", kakaoApiKey);
+
+  if (!mapRef.current) {
+    console.warn("mapRef is not available.");
+    return;
+  }
+
+  if (window.kakao && window.kakao.maps) {
+    console.log("Kakao SDK already loaded.");
+  }
 
     document.head.appendChild(script);
   }, [places, kakaoApiKey]);

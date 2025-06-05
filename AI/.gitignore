@@ -4,3 +4,7 @@ __pycache__/
 
 # 특정 폴더 아래 pycache 무시
 AI/__pycache__/
+
+
+#가상환경 라이브러리 무시
+/tripPlan/
