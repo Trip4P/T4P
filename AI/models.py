@@ -56,7 +56,9 @@ class Destination(Base):
     opening_periods = Column(JSON)
     latitude = Column(Float)
     longitude = Column(Float)
-    keywords = Column(Text) 
+    keywords = Column(JSON)
+
+    reviews = relationship("Review", back_populates="destination")
 
 class Meal(Base):
     __tablename__ = 'meals'
@@ -70,24 +72,32 @@ class Meal(Base):
     phone_number = Column(String)
     opening_hours = Column(Text)
     image_url = Column(Text)
-    style_date = Column(Boolean)
-    style_business = Column(Boolean)
-    style_anniversary = Column(Boolean)
-    style_team = Column(Boolean)
-    style_family = Column(Boolean)
-    style_view = Column(Boolean)
-    style_meeting = Column(Boolean)
-    style_quiet = Column(Boolean)
-    style_modern = Column(Boolean)
-    style_traditional = Column(Boolean)
-    created_at = Column(DateTime, default=datetime.utcnow)
     place_id = Column(String, unique=True, index=True)
-    area = Column(Text)
     opening_periods = Column(JSON)
     latitude = Column(Float)
     longitude = Column(Float)
-    keywords = Column(Text)  
+    keywords = Column(JSON)
 
+    reviews = relationship("Review", back_populates="meal")
+
+class Accommodation(Base):
+    __tablename__ = 'accommodations'
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    location = Column(Text)
+    price = Column(Integer)
+    rating = Column(String)
+    review_count = Column(Integer)
+    phone_number = Column(String)
+    opening_hours = Column(Text)
+    image_url = Column(Text)
+    place_id = Column(Text, unique=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    category = Column(Text, nullable=True)  # 예: 호텔, 게스트하우스 등
+
+    reviews = relationship("Review", back_populates="accommodation")
 
 class Budget(Base):
     __tablename__ = 'budget'
@@ -120,3 +130,17 @@ class QuickBudget(Base):
     comment = Column(String)
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class Review(Base):
+    __tablename__ = 'reviews'
+
+    id = Column(Integer, primary_key=True, index=True)
+    meal_id = Column(Integer, ForeignKey('meals.id', ondelete='CASCADE'), nullable=True)  # Integer 유지
+    destination_id = Column(Integer, ForeignKey('destinations.id', ondelete='CASCADE'), nullable=True)  # Integer 유지
+    accommodation_id = Column(Integer, ForeignKey('accommodations.id', ondelete='CASCADE'), nullable=True)  # Integer 유지
+    created_at = Column(DateTime, default=datetime.utcnow)
+    comment = Column(String, nullable=False)
+
+    meal = relationship("Meal", back_populates="reviews")
+    destination = relationship("Destination", back_populates="reviews")
+    accommodation = relationship("Accommodation", back_populates="reviews")
