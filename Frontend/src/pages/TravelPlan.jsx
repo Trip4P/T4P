@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ProgressBar from "../components/ProgressBar";
 //import GoogleMapView from "../components/GoogleMapView";
 import PlaceDetailPage from "./PlaceDetail";
 import KakaoMapView from "../components/KakaoMapView";
@@ -111,7 +112,8 @@ export default function TravelPlan() {
     return (
       <>
         <Header />
-        <LoadingSpinner />
+        {/* <LoadingSpinner /> */}
+        <ProgressBar />
       </>
     );
 

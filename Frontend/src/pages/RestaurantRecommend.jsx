@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import LoadingSpinner from "../components/LoadingSpinner";
+import ProgressBar from "../components/ProgressBar";
 import GoogleMapView from "../components/GoogleMapView";
 
 export default function RestaurantRecommendationPage() {
@@ -42,7 +43,8 @@ export default function RestaurantRecommendationPage() {
     return (
       <>
         <Header />
-        <LoadingSpinner />
+        {/* <LoadingSpinner /> */}
+        <ProgressBar />
       </>
     );
 
