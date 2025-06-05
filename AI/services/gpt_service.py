@@ -117,19 +117,31 @@ def get_place_name_from_db(place_id: str, db: Session):
     return result[0] if result else None
 
 def clean_schedule(schedule: dict, db: Session):
+    valid_schedule = []
     for day in schedule.get("plans", []):
+        new_day_schedule = []
         for item in day.get("schedule", []):
             place_id = item.get("placeId")
-            if place_id is None or str(place_id).strip() == "":
-                raise ValueError(f"placeId가 비어 있음 또는 유효하지 않음: {place_id}")
+            if not place_id:
+                continue
 
-            item['placeId'] = str(place_id).strip()
+            place_id = str(place_id).strip()
+            item['placeId'] = place_id
 
-            if item.get("place", "").startswith("미확인 장소 ID"):
-                place_name = get_place_name_from_db(item['placeId'], db)
-                item["place"] = place_name if place_name else f"미확인 장소 ID {item['placeId']}"
+            place_name = get_place_name_from_db(place_id, db)
+            if place_name:
+                item["place"] = place_name
+                new_day_schedule.append(item)
+            else:
+                print(f"DB에 없는 placeId 제거됨: {place_id}")
 
+        if new_day_schedule:
+            day["schedule"] = new_day_schedule
+            valid_schedule.append(day)
+
+    schedule["plans"] = valid_schedule
     return schedule
+
 
 def generate_schedule_prompt(start_city, end_city, start_date, end_date,
                              emotions, companions, peopleCount, places_data) -> str:
@@ -143,7 +155,7 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
 
     prompt = f"""
 당신은 여행 일정 계획을 생성하는 AI입니다.
-반드시 아래 조건을 지켜 JSON 형태로만 출력하세요.
+**반드시 아래 조건을 지켜 JSON 형태로만 출력하세요.**
 
 출발지: {start_city}
 도착지: {end_city}
@@ -152,31 +164,38 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
 동행자: {companions_str}
 인원: {peopleCount}명
 
-- 장소는 하루 및 전체 일정에서 중복 없이 사용하세요.
-- 관광지 1, 점심 식사 1, 저녁 식사 1, 숙소 1씩 포함하세요.
-- 출력은 아래 JSON 형식을 따르세요.
+**조건:**
+- 아래 제공된 관광지, 맛집, 숙소 리스트에서만 장소를 선택해야 합니다.
+- 목록에 없는 장소나 placeId를 생성하면 안 됩니다.
+- 하루 일정에는 관광지 1곳, 점심 식사 1곳, 저녁 식사 1곳, 숙소 1곳을 포함하세요.
+- 장소는 전체 일정에서 중복 없이 선택하세요.
 
-관광지:
+[관광지 리스트]
 {destinations_json}
 
-맛집:
+[맛집 리스트]
 {meals_json}
 
-숙소:
+[숙소 리스트]
 {accommodations_json}
 
-예시:
+**출력 예시 (실제 placeId는 위 리스트에서 사용):**
 {{
-  "aiEmpathy": "여정을 위한 일정입니다!",
+  "aiEmpathy": "즐거운 여정을 위한 일정입니다!",
   "tags": ["자연", "맛집"],
   "plans": [
     {{
       "day": 1,
       "schedule": [
-        {{"time": "09:00", "place": "경복궁", "placeId": "123", "aiComment": "역사 탐방", "latitude": 37.5, "longitude": 126.9}},
-        {{"time": "12:00", "place": "김밥천국", "placeId": "456", "aiComment": "간편한 점심", "latitude": 37.51, "longitude": 126.91}},
-        {{"time": "18:00", "place": "불고기식당", "placeId": "789", "aiComment": "저녁 식사", "latitude": 37.52, "longitude": 126.92}},
-        {{"time": "20:00", "place": "서울호텔", "placeId": "101", "aiComment": "숙박", "latitude": 37.53, "longitude": 126.93}}
+        {{
+          "time": "09:00",
+          "place": "경복궁",
+          "placeId": "PLACE_ID_1",
+          "aiComment": "역사적인 장소 방문",
+          "latitude": 37.5,
+          "longitude": 126.9
+        }},
+        ...
       ]
     }}
   ]
@@ -260,10 +279,10 @@ def get_ai_schedule(db: Session, start_city: str, end_city: str, start_date: str
 
     ai_text = response.choices[0].message.content
     parsed_json = extract_json_from_ai_response(ai_text)
+    parsed_json['plans'] = remove_duplicate_places(parsed_json['plans'])  # 중복 제거 먼저
     mapped_plans = map_ai_places_to_db_places(parsed_json['plans'], places_data)
     parsed_json['plans'] = mapped_plans
-    parsed_json['plans'] = remove_duplicate_places(parsed_json['plans'])
-    cleaned = clean_schedule(parsed_json, db)
+    cleaned = clean_schedule(parsed_json, db)  # DB 기준 place 확인
     return normalize_schedule_format(cleaned)
 
 app = FastAPI()
