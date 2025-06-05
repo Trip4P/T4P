@@ -1,24 +1,58 @@
 import json
-from database import get_db
-from config import redis_client
 from sqlalchemy import text
+from config import redis_client
+from database import get_db
 
-def update_popular_destinations():
-    print("DB 연결 시작")
+DEFAULT_IMAGE = "https://cdn.example.com/images/default.jpg"
+
+def update_popular_places():
     db = next(get_db())
-    print("DB 연결 성공")
 
     result = db.execute(text("""
-        SELECT end_city AS destination, COUNT(*) AS count
-        FROM schedules
-        GROUP BY end_city
+        SELECT place_id, COUNT(*) as count
+        FROM ai_schedule_places
+        GROUP BY place_id
         ORDER BY count DESC
         LIMIT 9
-    """))
-    print("쿼리 실행 완료")
+    """)).fetchall()
 
-    destinations = [{"destination": row[0], "count": row[1]} for row in result.fetchall()]
-    print("결과 파싱 완료:", destinations)
+    popular = []
+    for row in result:
+        place_id = row[0]
+        count = row[1]
 
-    redis_client.set("popular_destinations", json.dumps(destinations))  # json 문자열로 저장
-    print("인기 여행지 Redis 캐싱 완료")
+        # 관광지에서 조회
+        place = db.execute(text("""
+            SELECT name, COALESCE(image_url, '') as image_url, '관광지' as type
+            FROM destinations
+            WHERE place_id = :pid
+        """), {"pid": place_id}).fetchone()
+
+        # 맛집에서 조회
+        if not place:
+            place = db.execute(text("""
+                SELECT name, COALESCE(image_url, '') as image_url, '맛집' as type
+                FROM meals
+                WHERE place_id = :pid
+            """), {"pid": place_id}).fetchone()
+
+        # 숙소에서 조회
+        if not place:
+            place = db.execute(text("""
+                SELECT name, COALESCE(image_url, '') as image_url, '숙소' as type
+                FROM accommodations
+                WHERE place_id = :pid
+            """), {"pid": place_id}).fetchone()
+
+        if place:
+            name, image_url, place_type = place
+            popular.append({
+                "placeId": place_id,
+                "name": name,
+                "type": place_type,
+                "count": count,
+                "imageUrl": image_url if image_url else DEFAULT_IMAGE
+            })
+
+    redis_client.set("popular_places", json.dumps(popular, ensure_ascii=False))
+    print("인기 장소 Redis 캐싱 완료")
