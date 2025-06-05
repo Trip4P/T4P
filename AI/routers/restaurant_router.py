@@ -70,40 +70,40 @@ def fetch_meals_from_db(db: Session, city: str, region: str):
 
 # GPT 프롬프트 생성
 def generate_prompt(data: RestaurantRequest, meals_data: List[dict]) -> str:
-    meals_json = json.dumps(meals_data, ensure_ascii=False, indent=2)
-    return f"""
-당신은 사용자 맞춤형 여행 맛집 추천 전문가입니다.
-아래 조건에 따라 반드시 중괄호로 시작하고 끝나는 JSON 형식으로만 응답하십시오.
-설명, 해석, 마크다운 등은 절대 포함하지 마십시오.
+    meals_json = json.dumps(meals_data, ensure_ascii=False)
+    return f'''
+당신은 사용자 맞춤형 맛집 추천 AI입니다.
 
-사용자 정보:
-- 여행지: {data.city} {data.region}
-- 선호 음식: {", ".join(data.foodPreference)}
-- 선호 분위기: {", ".join(data.atmospheres)}
-- 동행자: {", ".join(data.companion)}
+조건:
+- 응답은 반드시 JSON 형식으로만 출력하세요.
+- 마크다운, 설명 문장, 안내 문구는 절대 포함하지 마세요.
+- JSON은 중괄호 {{}}로 감싸고, 모든 key는 큰따옴표 "로 감싸야 합니다.
+- 사용자 조건을 기반으로 아래 맛집 리스트 중 **정확히 4~5개**만 선택하세요.
 
-추천 조건:
-- meals 데이터 안에서만 선택하여 정확히 4개에서 5개의 맛집을 추천하십시오.
-- 음식 종류, 분위기, 동행자 조건에 가장 잘 부합하는 장소를 우선 추천하십시오.
-- 응답에는 반드시 aiFoodComment, tags, placeId, imageUrl 항목이 포함되어야 합니다.
+[사용자 조건]
+도시: {data.city}
+지역: {data.region}
+선호 음식: {", ".join(data.foodPreference)}
+분위기: {", ".join(data.atmospheres)}
+동행자: {", ".join(data.companion)}
 
-meals 데이터:
+[맛집 리스트]
 {meals_json}
 
-응답 예시:
+[응답 예시]
 {{
-  "aiComment": "서울 강남에서 가족과 함께하기 좋은 맛집들을 엄선했어요.",
+  "aiComment": "추천 요약 코멘트",
   "places": [
     {{
       "name": "맛집 이름",
-      "aiFoodComment": "음식에 대한 간단한 설명",
-      "tags": ["데이트", "가족모임"],
+      "aiFoodComment": "해당 음식에 대한 짧은 설명",
+      "tags": ["데이트", "가성비"],
       "placeId": "ChIJxxxxxx",
       "imageUrl": "https://example.com/image.jpg"
     }}
   ]
 }}
-"""
+'''
 
 # 라우터 엔드포인트
 @router.post("/ai/restaurant", response_model=RestaurantResponse)
@@ -122,10 +122,12 @@ async def ai_recommend_restaurant(data: RestaurantRequest, db: Session = Depends
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1200
+            max_tokens=3000
         )
 
         content = response.choices[0].message.content.strip()
+        print("GPT raw response:\n", content)  # 디버깅 출력
+
         json_start = content.find('{')
         json_end = content.rfind('}') + 1
         parsed_json = content[json_start:json_end]
