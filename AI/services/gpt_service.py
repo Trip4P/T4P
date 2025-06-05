@@ -142,7 +142,6 @@ def clean_schedule(schedule: dict, db: Session):
     schedule["plans"] = valid_schedule
     return schedule
 
-
 def generate_schedule_prompt(start_city, end_city, start_date, end_date,
                              emotions, companions, peopleCount, places_data) -> str:
     trip_days = calculate_trip_days(start_date, end_date)
@@ -167,8 +166,11 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
 **조건:**
 - 아래 제공된 관광지, 맛집, 숙소 리스트에서만 장소를 선택해야 합니다.
 - 목록에 없는 장소나 placeId를 생성하면 안 됩니다.
+- 총 {trip_days}일에 맞춰 일정을 생성하세요.
 - 하루 일정에는 관광지 1곳, 점심 식사 1곳, 저녁 식사 1곳, 숙소 1곳을 포함하세요.
+- 각 날짜는 "day": 1, 2, 3, ... 으로 구분하며, 날짜 수만큼 반드시 생성하세요.
 - 장소는 전체 일정에서 중복 없이 선택하세요.
+- JSON 외 텍스트는 절대 포함하지 마세요. 응답은 {{ 로 시작해 }} 로 끝나야 합니다.
 
 [관광지 리스트]
 {destinations_json}
@@ -179,7 +181,7 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
 [숙소 리스트]
 {accommodations_json}
 
-**출력 예시 (실제 placeId는 위 리스트에서 사용):**
+**출력 예시:**
 {{
   "aiEmpathy": "즐거운 여정을 위한 일정입니다!",
   "tags": ["자연", "맛집"],
@@ -194,8 +196,7 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
           "aiComment": "역사적인 장소 방문",
           "latitude": 37.5,
           "longitude": 126.9
-        }},
-        ...
+        }}
       ]
     }}
   ]
@@ -204,17 +205,22 @@ def generate_schedule_prompt(start_city, end_city, start_date, end_date,
     return prompt.strip()
 
 def extract_json_from_ai_response(ai_response_text: str) -> dict:
-    match = re.search(r"```json\s*(\{.*?\})\s*```", ai_response_text, re.DOTALL)
-    if match:
-        json_str = match.group(1)
-    else:
-        json_start = ai_response_text.find("{")
-        json_end = ai_response_text.rfind("}")
-        if json_start == -1 or json_end == -1:
-            raise ValueError("JSON 구조가 올바르지 않습니다.")
-        json_str = ai_response_text[json_start:json_end + 1]
+    try:
+        match = re.search(r"```json\s*(\{.*?\})\s*```", ai_response_text, re.DOTALL)
+        if match:
+            json_str = match.group(1)
+        else:
+            json_start = ai_response_text.find("{")
+            json_end = ai_response_text.rfind("}")
+            if json_start == -1 or json_end == -1:
+                raise ValueError("JSON 구조가 올바르지 않습니다.")
+            json_str = ai_response_text[json_start:json_end + 1]
 
-    return json5.loads(json_str)
+        return json5.loads(json_str)
+
+    except Exception as e:
+        print("AI 응답 파싱 오류:", e)
+        raise ValueError("AI 응답을 JSON으로 변환하는 데 실패했습니다.")
 
 def normalize_schedule_format(response_json: dict) -> ScheduleAIResponse:
     plans = []
@@ -274,15 +280,16 @@ def get_ai_schedule(db: Session, start_city: str, end_city: str, start_date: str
         model="gpt-4o",
         messages=messages,
         temperature=0.7,
-        max_tokens=1500,
+        max_tokens=3000,
     )
 
     ai_text = response.choices[0].message.content
+    print("AI 응답 내용:\n", ai_text)
     parsed_json = extract_json_from_ai_response(ai_text)
-    parsed_json['plans'] = remove_duplicate_places(parsed_json['plans'])  # 중복 제거 먼저
+    parsed_json['plans'] = remove_duplicate_places(parsed_json['plans'])
     mapped_plans = map_ai_places_to_db_places(parsed_json['plans'], places_data)
     parsed_json['plans'] = mapped_plans
-    cleaned = clean_schedule(parsed_json, db)  # DB 기준 place 확인
+    cleaned = clean_schedule(parsed_json, db)
     return normalize_schedule_format(cleaned)
 
 app = FastAPI()
