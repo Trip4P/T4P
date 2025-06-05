@@ -72,25 +72,32 @@ def fetch_meals_from_db(db: Session, city: str, region: str):
 def generate_prompt(data: RestaurantRequest, meals_data: List[dict]) -> str:
     meals_json = json.dumps(meals_data, ensure_ascii=False, indent=2)
     return f"""
-당신은 맛집 추천 전문가입니다.
-절대 설명 없이 아래 JSON 형식으로만 응답하세요. 중괄호 포함된 JSON 외에는 아무 것도 출력하지 마세요.
+당신은 사용자 맞춤형 여행 맛집 추천 전문가입니다.
+아래 조건에 따라 반드시 중괄호로 시작하고 끝나는 JSON 형식으로만 응답하십시오.
+설명, 해석, 마크다운 등은 절대 포함하지 마십시오.
 
-사용자는 '{data.city} {data.region}' 지역으로 여행하며,
-선호 음식: {", ".join(data.foodPreference)}
-분위기: {", ".join(data.atmospheres)}
-동행자: {", ".join(data.companion)}
+사용자 정보:
+- 여행지: {data.city} {data.region}
+- 선호 음식: {", ".join(data.foodPreference)}
+- 선호 분위기: {", ".join(data.atmospheres)}
+- 동행자: {", ".join(data.companion)}
 
-🟨 아래는 추천할 수 있는 실제 맛집 데이터입니다. 반드시 이 안에서만 선택하세요:
+추천 조건:
+- meals 데이터 안에서만 선택하여 정확히 4개에서 5개의 맛집을 추천하십시오.
+- 음식 종류, 분위기, 동행자 조건에 가장 잘 부합하는 장소를 우선 추천하십시오.
+- 응답에는 반드시 aiFoodComment, tags, placeId, imageUrl 항목이 포함되어야 합니다.
+
+meals 데이터:
 {meals_json}
 
-🧾 응답 형식 예시:
+응답 예시:
 {{
-  "aiComment": "한 줄 요약 코멘트",
+  "aiComment": "서울 강남에서 가족과 함께하기 좋은 맛집들을 엄선했어요.",
   "places": [
     {{
       "name": "맛집 이름",
-      "aiFoodComment": "음식에 대해 한 줄 설명",
-      "tags": ["데이트", "뷰 맛집"],
+      "aiFoodComment": "음식에 대한 간단한 설명",
+      "tags": ["데이트", "가족모임"],
       "placeId": "ChIJxxxxxx",
       "imageUrl": "https://example.com/image.jpg"
     }}
