@@ -7,7 +7,7 @@ export default {
     '^.+\\.jsx?$': 'babel-jest',
   },
   moduleFileExtensions: ['js', 'jsx'],
-  setupFilesAfterEnv: ['<rootDir>/src/tests/setupTests.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setupTests.js'],
   globals: {
     TextEncoder: TextEncoder,
     TextDecoder: TextDecoder,

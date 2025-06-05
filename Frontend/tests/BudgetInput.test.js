@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import BudgetInputPage from "../pages/BudgetInput";
+import BudgetInputPage from "../src/pages/BudgetInput";
 import { MemoryRouter } from "react-router-dom";
 import axios from "axios";
 

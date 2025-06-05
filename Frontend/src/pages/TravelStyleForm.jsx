@@ -25,6 +25,15 @@ const companionBoxes = [
   "부모님과",
 ];
 
+const formatDateKorean = (date) =>
+  date?.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .replace(/\. /g, "-")
+    .replace(/\./g, "");
+
 export default function TravelStyleForm() {
   const navigate = useNavigate();
   const [startCity, setStartCity] = useState("");
@@ -164,8 +173,8 @@ export default function TravelStyleForm() {
               const travelStyleDate = {
                 startCity,
                 endCity,
-                startDate: startDate ? startDate.toISOString().split("T")[0] : null,
-                endDate: endDate ? endDate.toISOString().split("T")[0] : null,
+                startDate: startDate ? formatDateKorean(startDate) : null,
+                endDate: endDate ? formatDateKorean(endDate) : null,
                 emotions,
                 companions,
                 peopleCount,

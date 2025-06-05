@@ -27,11 +27,23 @@ ChartJS.register(
 const generateColors = (count) => {
   const colors = [];
   for (let i = 0; i < count; i++) {
-    const hue = (i * 360) / count; // 색상환을 나눠서
-    colors.push(`hsl(${hue}, 70%, 60%)`);
+    // hue 범위를 파랑 계열로 제한 (약 180 ~ 250)
+    const hue = 180 + Math.floor(Math.random() * 70); // 180~250 사이 정수
+    const saturation = 70 + Math.floor(Math.random() * 10); // 70~80%
+    const lightness = 50 + Math.floor(Math.random() * 10); // 50~60%
+    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
   }
   return colors;
 };
+
+const formatDateKorean = (date) =>
+  date?.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+    .replace(/\. /g, "-")
+    .replace(/\./g, "");
 
 export default function TravelBudgetInputPage() {
   const [showResult, setShowResult] = useState(false);
@@ -43,6 +55,8 @@ export default function TravelBudgetInputPage() {
   const [budgetData, setBudgetData] = useState(null);
   const [aiComment, setAiComment] = useState("");
   const [totalBudget, setTotalBudget] = useState(null);
+
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // 💰 더미 예산 데이터
   // const dummyBudgetData = {
@@ -81,11 +95,11 @@ export default function TravelBudgetInputPage() {
 
   const fetchBudgetData = async () => {
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/budgets", {
+      const res = await axios.post(`${VITE_API_BASE_URL}/api/budgets`, {
         startCity,
         endCity,
-        startDate: startDate?.toISOString().split("T")[0],
-        endDate: endDate?.toISOString().split("T")[0],
+        startDate: formatDateKorean(startDate),
+        endDate: formatDateKorean(endDate),
         peopleNum: peopleCount,
       });
 

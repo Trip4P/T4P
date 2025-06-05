@@ -1,14 +1,16 @@
 import re
-import json
+import json, json5
 from typing import List, Optional
+from datetime import datetime
+from decimal import Decimal
 
 from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from openai import OpenAI
 
-from config import settings
+from config import settings  # OPENAI_API_KEY, DATABASE_URL 포함
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -22,7 +24,6 @@ def get_db():
     finally:
         db.close()
 
-# --- Pydantic 모델 ---
 class ScheduleRequest(BaseModel):
     startCity: str
     endCity: str
@@ -35,7 +36,7 @@ class ScheduleRequest(BaseModel):
 class SchedulePlanItem(BaseModel):
     time: Optional[str]
     place: Optional[str]
-    placeId: Optional[int]
+    placeId: Optional[str]
     aiComment: Optional[str]
     latitude: Optional[float]
     longitude: Optional[float]
@@ -59,171 +60,264 @@ class ScheduleAPIResponse(BaseModel):
     peopleCount: int
     aiResult: ScheduleAIResponse
 
-# --- 감정 → 스타일 매핑 ---
-EMOTION_TO_STYLE = {
-    "기쁜": ["style_activity", "style_hotplace", "style_photo", "style_shopping"],
-    "설레는": ["style_date", "style_culture", "style_exotic", "style_landmark", "style_photo"],
-    "평범한": ["style_nature", "style_healing", "style_quiet", "style_traditional"],
-    "놀란": ["style_exotic", "style_landmark", "style_activity", "style_hotplace"],
-    "불쾌한": ["style_healing", "style_quiet", "style_nature", "style_view"],
-    "두려운": ["style_culture", "style_traditional", "style_team"],
-    "슬픈": ["style_healing", "style_nature", "style_family", "style_culture", "style_quiet"],
-    "화나는": ["style_activity", "style_shopping", "style_team", "style_photo"],
-    "힐링": ["style_healing", "style_nature", "style_quiet"],
-}
+def calculate_trip_days(start_date: str, end_date: str) -> int:
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+        return max((end - start).days + 1, 1)
+    except Exception:
+        return 1
 
-def map_emotions_to_styles(emotions: List[str]) -> List[str]:
-    styles = set()
-    for emo in emotions:
-        styles.update(EMOTION_TO_STYLE.get(emo, []))
-    return list(styles)
+def fetch_places_from_db(db: Session, city: str):
+    destinations = db.execute(text("""
+        SELECT place_id, name, area, latitude, longitude 
+        FROM destinations 
+        WHERE area ILIKE :city 
+        LIMIT 30
+    """), {"city": f"%{city}%"}).fetchall()
 
-def generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions, peopleCount) -> str:
+    meals = db.execute(text("""
+        SELECT place_id, name, food_type, latitude, longitude 
+        FROM meals 
+        WHERE location ILIKE :city 
+        LIMIT 20
+    """), {"city": f"%{city}%"}).fetchall()
+
+    accommodations = db.execute(text("""
+        SELECT place_id, name, location, latitude, longitude 
+        FROM accommodations 
+        WHERE location ILIKE :city 
+        LIMIT 10
+    """), {"city": f"%{city}%"}).fetchall()
+
+    def row_to_dict(row):
+        result = dict(row._mapping)
+        for k, v in result.items():
+            if isinstance(v, Decimal):
+                result[k] = float(v)
+        return result
+
+    return {
+        "destinations": [row_to_dict(r) for r in destinations],
+        "meals": [row_to_dict(r) for r in meals],
+        "accommodations": [row_to_dict(r) for r in accommodations],
+    }
+
+def get_place_name_from_db(place_id: str, db: Session):
+    result = db.execute(
+        text("""
+            SELECT name FROM meals WHERE place_id = :id
+            UNION
+            SELECT name FROM destinations WHERE place_id = :id
+            UNION
+            SELECT name FROM accommodations WHERE place_id = :id
+        """),
+        {"id": place_id}
+    ).fetchone()
+    return result[0] if result else None
+
+def clean_schedule(schedule: dict, db: Session):
+    valid_schedule = []
+    for day in schedule.get("plans", []):
+        new_day_schedule = []
+        for item in day.get("schedule", []):
+            place_id = item.get("placeId")
+            if not place_id:
+                continue
+
+            place_id = str(place_id).strip()
+            item['placeId'] = place_id
+
+            place_name = get_place_name_from_db(place_id, db)
+            if place_name:
+                item["place"] = place_name
+                new_day_schedule.append(item)
+            else:
+                print(f"DB에 없는 placeId 제거됨: {place_id}")
+
+        if new_day_schedule:
+            day["schedule"] = new_day_schedule
+            valid_schedule.append(day)
+
+    schedule["plans"] = valid_schedule
+    return schedule
+
+def generate_schedule_prompt(start_city, end_city, start_date, end_date,
+                             emotions, companions, peopleCount, places_data) -> str:
+    trip_days = calculate_trip_days(start_date, end_date)
     emotion_str = ", ".join(emotions)
     companions_str = ", ".join(companions)
-    return (
-        f"출발지: {start_city}\n"
-        f"도착지: {end_city}\n"
-        f"여행 기간: {start_date}부터 {end_date}까지\n"
-        f"사용자 감정: {emotion_str}\n"
-        f"동행인: {companions_str}\n"
-        f"인원 수: {peopleCount}명\n\n"
-        "이 정보를 바탕으로 사용자에게 맞춤형 여행 일정을 추천해줘. 결과는 반드시 JSON 형식으로 출력해야 하며, 다음 조건을 따라야 해:\n\n"
-        "1. \"aiEmpathy\": 사용자 감정에 공감하는 한 문장\n"
-        "2. \"tags\": 여행을 대표하는 키워드 4개\n"
-        "3. \"plans\": 반드시 **리스트(List)** 형식으로 작성된 각 날짜별 일정 정보\n\n"
-        "⚠️ 절대로 {\"day1\": {...}, \"day2\": {...}} 같은 객체(Dictionary) 형태로 작성하지 말 것\n\n"
-        "각 plans 항목은 다음과 같은 구조여야 함:\n"
-        "- day: 날짜 숫자\n"
-        "- schedule: 하루 일정 리스트. 각 일정 항목은 다음 필드 포함:\n"
-        "  - time, place, placeId, aiComment, latitude, longitude\n\n"
-        "예시:\n"
-        "```json\n"
-        "{\n"
-        "  \"aiEmpathy\": \"힐링과 즐거움을 모두 느낄 수 있는 여행을 준비했어요!\",\n"
-        "  \"tags\": [\"힐링\", \"자연\", \"맛집\", \"여유\"],\n"
-        "  \"plans\": [\n"
-        "    {\n"
-        "      \"day\": 1,\n"
-        "      \"schedule\": [\n"
-        "        {\n"
-        "          \"time\": \"09:00\",\n"
-        "          \"place\": \"호텔 부산\",\n"
-        "          \"placeId\": 123,\n"
-        "          \"aiComment\": \"여유로운 하루의 시작\",\n"
-        "          \"latitude\": 35.1531,\n"
-        "          \"longitude\": 129.0604\n"
-        "        }\n"
-        "      ]\n"
-        "    }\n"
-        "  ]\n"
-        "}\n"
-        "```\n"
-        "이 구조를 반드시 그대로 따를 것!"
-    )
+
+    destinations_json = json.dumps(places_data["destinations"], ensure_ascii=False, indent=2)
+    meals_json = json.dumps(places_data["meals"], ensure_ascii=False, indent=2)
+    accommodations_json = json.dumps(places_data["accommodations"], ensure_ascii=False, indent=2)
+
+    prompt = f"""
+당신은 여행 일정 계획을 생성하는 AI입니다.
+**반드시 아래 조건을 지켜 JSON 형태로만 출력하세요.**
+
+출발지: {start_city}
+도착지: {end_city}
+여행 기간: {start_date}부터 {end_date}까지, 총 {trip_days}일
+감정: {emotion_str}
+동행자: {companions_str}
+인원: {peopleCount}명
+
+**조건:**
+- 아래 제공된 관광지, 맛집, 숙소 리스트에서만 장소를 선택해야 합니다.
+- 목록에 없는 장소나 placeId를 생성하면 안 됩니다.
+- 총 {trip_days}일에 맞춰 일정을 생성하세요.
+- 하루 일정에는 관광지 1곳, 점심 식사 1곳, 저녁 식사 1곳, 숙소 1곳을 포함하세요.
+- 각 날짜는 "day": 1, 2, 3, ... 으로 구분하며, 날짜 수만큼 반드시 생성하세요.
+- 장소는 전체 일정에서 중복 없이 선택하세요.
+- JSON 외 텍스트는 절대 포함하지 마세요. 응답은 {{ 로 시작해 }} 로 끝나야 합니다.
+
+[관광지 리스트]
+{destinations_json}
+
+[맛집 리스트]
+{meals_json}
+
+[숙소 리스트]
+{accommodations_json}
+
+**출력 예시:**
+{{
+  "aiEmpathy": "즐거운 여정을 위한 일정입니다!",
+  "tags": ["자연", "맛집"],
+  "plans": [
+    {{
+      "day": 1,
+      "schedule": [
+        {{
+          "time": "09:00",
+          "place": "경복궁",
+          "placeId": "PLACE_ID_1",
+          "aiComment": "역사적인 장소 방문",
+          "latitude": 37.5,
+          "longitude": 126.9
+        }}
+      ]
+    }}
+  ]
+}}
+"""
+    return prompt.strip()
 
 def extract_json_from_ai_response(ai_response_text: str) -> dict:
-    pattern = r"```json\s*(\{.*?\})\s*```"
-    match = re.search(pattern, ai_response_text, re.DOTALL)
-    json_str = match.group(1).strip() if match else ai_response_text.strip()
     try:
-        return json.loads(json_str)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"JSON 파싱 실패: {e}\n원본:\n{json_str[:300]}...")
+        match = re.search(r"```json\s*(\{.*?\})\s*```", ai_response_text, re.DOTALL)
+        if match:
+            json_str = match.group(1)
+        else:
+            json_start = ai_response_text.find("{")
+            json_end = ai_response_text.rfind("}")
+            if json_start == -1 or json_end == -1:
+                raise ValueError("JSON 구조가 올바르지 않습니다.")
+            json_str = ai_response_text[json_start:json_end + 1]
+
+        return json5.loads(json_str)
+
+    except Exception as e:
+        print("AI 응답 파싱 오류:", e)
+        raise ValueError("AI 응답을 JSON으로 변환하는 데 실패했습니다.")
 
 def normalize_schedule_format(response_json: dict) -> ScheduleAIResponse:
-    import re
-
-    raw_plans = response_json.get("plans")
-    if not raw_plans:
-        raise ValueError("plans 데이터가 존재하지 않습니다.")
-
-    plans_list = []
-
-    if isinstance(raw_plans, dict):
-        # dict -> 리스트 변환
-        for day_key in sorted(raw_plans.keys(), key=lambda x: int(re.sub(r"\D", "", x))):
-            day_data = raw_plans[day_key]
-            plans_list.append(ScheduleDayPlan(
-                day=int(re.sub(r"\D", "", day_key)),
-                schedule=[SchedulePlanItem(**item) for item in day_data.get("schedule", [])]
-            ))
-    elif isinstance(raw_plans, list):
-        # 리스트일 경우 각 항목을 Pydantic 객체로 변환
-        for day_item in raw_plans:
-            plans_list.append(ScheduleDayPlan(
-                day=day_item.get("day"),
-                schedule=[SchedulePlanItem(**item) for item in day_item.get("schedule", [])]
-            ))
-    else:
-        raise ValueError("plans 형식이 유효하지 않습니다.")
-
+    plans = []
+    for day_item in response_json.get("plans", []):
+        schedule = [SchedulePlanItem(**item) for item in day_item.get("schedule", [])]
+        plans.append(ScheduleDayPlan(day=day_item.get("day"), schedule=schedule))
     return ScheduleAIResponse(
         aiEmpathy=response_json.get("aiEmpathy", ""),
         tags=response_json.get("tags", []),
-        plans=plans_list
+        plans=plans
     )
 
-def get_ai_schedule(
-    db: Session,
-    start_city: str,
-    end_city: str,
-    start_date: str,
-    end_date: str,
-    emotions: List[str],
-    companions: List[str],
-    peopleCount: int
-) -> ScheduleAIResponse:
-    styles = map_emotions_to_styles(emotions)
-    prompt = generate_schedule_prompt(start_city, end_city, start_date, end_date, emotions, companions, peopleCount)
+def remove_duplicate_places(plans: List[dict]) -> List[dict]:
+    seen_ids = set()
+    for day in plans:
+        unique_schedule = []
+        for item in day["schedule"]:
+            pid = item.get("placeId")
+            if pid and pid not in seen_ids:
+                seen_ids.add(pid)
+                unique_schedule.append(item)
+        day["schedule"] = unique_schedule
+    return plans
 
+def map_ai_places_to_db_places(ai_plans, places_data):
+    placeid_to_place = {}
+    for category in ['destinations', 'meals', 'accommodations']:
+        for place in places_data[category]:
+            placeid_to_place[str(place['place_id'])] = place
+
+    for day_plan in ai_plans:
+        for item in day_plan['schedule']:
+            place_id = item.get('placeId')
+            if place_id:
+                place_id_str = str(place_id)
+                if place_id_str in placeid_to_place:
+                    db_place = placeid_to_place[place_id_str]
+                    item['place'] = db_place['name']
+                    item['latitude'] = db_place.get('latitude')
+                    item['longitude'] = db_place.get('longitude')
+                else:
+                    item['place'] = f"미확인 장소 ID {place_id}"
+                    item['latitude'] = None
+                    item['longitude'] = None
+    return ai_plans
+
+def get_ai_schedule(db: Session, start_city: str, end_city: str, start_date: str, end_date: str,
+                    emotions: List[str], companions: List[str], peopleCount: int) -> ScheduleAIResponse:
+    places_data = fetch_places_from_db(db, end_city)
+    prompt = generate_schedule_prompt(start_city, end_city, start_date, end_date,
+                                      emotions, companions, peopleCount, places_data)
+    messages = [
+        {"role": "system", "content": "You are a travel planner AI that generates user-personalized travel itineraries based on given data."},
+        {"role": "user", "content": prompt},
+    ]
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful travel itinerary planner."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=2000,
+        model="gpt-4o",
+        messages=messages,
         temperature=0.7,
+        max_tokens=3000,
     )
 
-    raw_text = response.choices[0].message.content
-    print("GPT 응답:\n", raw_text)
+    ai_text = response.choices[0].message.content
+    print("AI 응답 내용:\n", ai_text)
+    parsed_json = extract_json_from_ai_response(ai_text)
+    parsed_json['plans'] = remove_duplicate_places(parsed_json['plans'])
+    mapped_plans = map_ai_places_to_db_places(parsed_json['plans'], places_data)
+    parsed_json['plans'] = mapped_plans
+    cleaned = clean_schedule(parsed_json, db)
+    return normalize_schedule_format(cleaned)
 
-    json_data = extract_json_from_ai_response(raw_text)
-    normalized = normalize_schedule_format(json_data)
-
-    return ScheduleAIResponse(
-        aiEmpathy=normalized.aiEmpathy,
-        tags=normalized.tags,
-        plans=normalized.plans
-    )
-
-# --- FastAPI 엔드포인트 ---
 app = FastAPI()
 
-@app.post("/api/schedule", response_model=ScheduleAPIResponse)
-def create_schedule(request: ScheduleRequest, db: Session = Depends(get_db)):
+@app.post("/api/ai/schedule", response_model=ScheduleAPIResponse)
+def api_ai_schedule(req: ScheduleRequest, db: Session = Depends(get_db)):
     try:
         ai_result = get_ai_schedule(
             db=db,
-            start_city=request.startCity,
-            end_city=request.endCity,
-            start_date=request.startDate,
-            end_date=request.endDate,
-            emotions=request.emotions,
-            companions=request.companions,
-            peopleCount=request.peopleCount
+            start_city=req.startCity,
+            end_city=req.endCity,
+            start_date=req.startDate,
+            end_date=req.endDate,
+            emotions=req.emotions,
+            companions=req.companions,
+            peopleCount=req.peopleCount
         )
         return ScheduleAPIResponse(
-            startCity=request.startCity,
-            endCity=request.endCity,
-            startDate=request.startDate,
-            endDate=request.endDate,
-            emotions=request.emotions,
-            companions=request.companions,
-            peopleCount=request.peopleCount,
+            startCity=req.startCity,
+            endCity=req.endCity,
+            startDate=req.startDate,
+            endDate=req.endDate,
+            emotions=req.emotions,
+            companions=req.companions,
+            peopleCount=req.peopleCount,
             aiResult=ai_result
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI 호출 또는 파싱 실패: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="서버 에러가 발생했습니다.")

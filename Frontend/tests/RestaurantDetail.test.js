@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import axios from "axios";
-import RestaurantDetailPage from "../pages/RestaurantDetail";
+import RestaurantDetailPage from "../src/pages/RestaurantDetail";
 
 jest.mock("axios");
 

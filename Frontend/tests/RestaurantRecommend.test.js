@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import RestaurantRecommendationPage from "../pages/RestaurantRecommend";
+import RestaurantRecommendationPage from "../src/pages/RestaurantRecommend";
 import { MemoryRouter } from "react-router-dom";
 import axios from "axios";
 
 jest.mock("axios");
-jest.mock("../components/GoogleMapView", () => () => <div data-testid="mock-map">MockMap</div>);
+jest.mock("./src/components/GoogleMapView", () => () => <div data-testid="mock-map">MockMap</div>);
 
 describe("RestaurantRecommend 페이지", () => {
   beforeEach(() => {

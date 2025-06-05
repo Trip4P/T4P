@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Doughnut } from "react-chartjs-2";
 import axios from "axios";
 import { render, screen } from "@testing-library/react";
-import Budget from "../pages/Budget.jsx";
+import Budget from "../src/pages/Budget"
 import { MemoryRouter } from "react-router-dom";
 
 jest.mock("axios");

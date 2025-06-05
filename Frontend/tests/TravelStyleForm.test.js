@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import TravelStyleForm from "../pages/TravelStyleForm";
+import TravelStyleForm from "../src/pages/TravelStyleForm";
 import "@testing-library/jest-dom";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";

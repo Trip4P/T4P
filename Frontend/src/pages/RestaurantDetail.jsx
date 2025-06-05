@@ -1,20 +1,48 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function RestaurantDetailPage() {
-  const { placeId } = useParams();
+  const location = useLocation();
+  const { placeId, companions, foodPreferences, atmospheres } = location.state || {};
   const [placeData, setPlaceData] = useState(null);
 
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
   useEffect(() => {
-    axios.get(`/api/food-places-detail/${placeId}`).then((res) => {
-      setPlaceData(res.data);
-    });
-  }, [placeId]);
+  if (placeId) {
+    axios.post(`${VITE_API_BASE_URL}/api/food-places-detail`, {
+      placeId: placeId,
+      companions: companions,
+      foodPreferences: foodPreferences,
+      atmospheres: atmospheres
+    })
+      .then((res) => {
+        // 응답이 HTML이면 잘못된 응답 처리
+        if (typeof res.data === "string" && res.data.includes("<!doctype html>")) {
+          console.error("잘못된 API 응답입니다. 해당 API가 없을 수 있습니다.");
+          setPlaceData(null);
+        } else {
+          setPlaceData(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("API 호출 실패:", err);
+        setPlaceData(null);
+      });
+  }
+}, [placeId]);
 
-  if (!placeData) return <p>로딩 중...</p>;
+  if (!placeData)
+    return (
+      <>
+        <Header />
+        <LoadingSpinner />
+      </>
+    );
 
   return (
     <>
@@ -124,7 +152,12 @@ export default function RestaurantDetailPage() {
                 #데이트카페
               </span> */}
               {placeData.reviewKeywords.map((tag, i) => (
-                <span key={i} className="bg-blue-100 text-blue-600 px-2 py-1 rounded">#{tag}</span>
+                <span
+                  key={i}
+                  className="bg-blue-100 text-blue-600 px-2 py-1 rounded"
+                >
+                  #{tag}
+                </span>
               ))}
             </div>
           </div>
@@ -146,7 +179,7 @@ export default function RestaurantDetailPage() {
           </div>
         </div>
       </div>
-      <Footer/>
+      <Footer />
     </>
   );
 }

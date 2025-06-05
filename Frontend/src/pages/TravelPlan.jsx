@@ -3,9 +3,11 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ProgressBar from "../components/ProgressBar";
 //import GoogleMapView from "../components/GoogleMapView";
 import PlaceDetailPage from "./PlaceDetail";
-import KakaoMapView  from "../components/KakaoMapView";
+import KakaoMapView from "../components/KakaoMapView";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
@@ -15,60 +17,66 @@ export default function TravelPlan() {
   const [tags, setTags] = useState([]);
   const [plans, setPlans] = useState([]);
   const [activeDay, setActiveDay] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [travelStyle, setTravelStyle] = useState(null);
 
-  // const days = ["DAY 1", "DAY 2", "DAY 3"];
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const places = [
-    {
-      name: "경복궁",
-      lat: 37.579617,
-      lng: 126.977041,
-      description: "조선의 정궁, 전통과 아름다움의 상징",
-    },
-    {
-      name: "북촌한옥마을",
-      lat: 37.582604,
-      lng: 126.983998,
-      description: "한옥의 고즈넉함과 인생샷 스팟!",
-    },
-    {
-      name: "광장시장 육회골목",
-      lat: 37.570376,
-      lng: 126.999076,
-      description: "서울 3대 육회, 광장시장 필수코스",
-    },
-    {
-      name: "N서울타워",
-      lat: 37.551169,
-      lng: 126.988227,
-      description: "서울 전경 한눈에, 야경 명소!",
-    },
-    {
-      name: "카페 온더플레이트",
-      lat: 37.545226,
-      lng: 127.004885,
-      description: "한강뷰 감성카페 ☕️🌉",
-    },
-  ];
+  // const places = [
+  //   {
+  //     name: "경복궁",
+  //     lat: 37.579617,
+  //     lng: 126.977041,
+  //     description: "조선의 정궁, 전통과 아름다움의 상징",
+  //   },
+  //   {
+  //     name: "북촌한옥마을",
+  //     lat: 37.582604,
+  //     lng: 126.983998,
+  //     description: "한옥의 고즈넉함과 인생샷 스팟!",
+  //   },
+  //   {
+  //     name: "광장시장 육회골목",
+  //     lat: 37.570376,
+  //     lng: 126.999076,
+  //     description: "서울 3대 육회, 광장시장 필수코스",
+  //   },
+  //   {
+  //     name: "N서울타워",
+  //     lat: 37.551169,
+  //     lng: 126.988227,
+  //     description: "서울 전경 한눈에, 야경 명소!",
+  //   },
+  //   {
+  //     name: "카페 온더플레이트",
+  //     lat: 37.545226,
+  //     lng: 127.004885,
+  //     description: "한강뷰 감성카페 ☕️🌉",
+  //   },
+  // ];
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       try {
         const stored = JSON.parse(localStorage.getItem("travelStyle"));
-        
+
         if (!stored) {
           console.warn("로컬 스토리지에 사용자 성향 정보 없음");
+          setIsLoading(false);
           return;
         }
 
-        const res = await axios.post("http://127.0.0.1:8000/ai/schedule/", {
+        setTravelStyle(stored);
+
+        const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
           startCity: stored.startCity,
           endCity: stored.endCity,
           startDate: stored.startDate,
           endDate: stored.endDate,
           emotions: stored.emotions,
           companions: stored.companions,
-          peopleCount: stored.peopleCount
+          peopleCount: stored.peopleCount,
         });
 
         setStartDate(stored.startDate);
@@ -77,20 +85,37 @@ export default function TravelPlan() {
         setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
 
         // 🔐 방어 코드
-      if (Array.isArray(res.data.plans)) {
-        setPlans(res.data.plans);
-      } else {
-        console.warn("plans가 배열이 아닙니다:", res.data.plans);
-        setPlans([]);
-      }
-
+        if (Array.isArray(res.data.plans)) {
+          setPlans(res.data.plans);
+          localStorage.setItem("travelPlan", JSON.stringify({
+            plans: res.data.plans,
+            peopleCount: stored.peopleCount,
+            endCity: stored.endCity,
+          }));
+        } else {
+          console.warn("plans가 배열이 아닙니다:", res.data.plans);
+          setPlans([]);
+        }
+        setIsLoading(false);
       } catch (err) {
         console.error("에러 발생", err);
+        setIsLoading(false);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchData();
   }, []);
+
+  if (isLoading)
+    return (
+      <>
+        <Header />
+        {/* <LoadingSpinner /> */}
+        <ProgressBar />
+      </>
+    );
 
   return (
     <>
@@ -108,7 +133,7 @@ export default function TravelPlan() {
                 key={tag}
                 className="inline-block bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full"
               >
-                `#{tag}`
+                #{tag}
               </span>
             ))}
           </div>
@@ -118,7 +143,7 @@ export default function TravelPlan() {
         <div className="flex items-start bg-blue-100 p-4 rounded-lg mb-6">
           <div className="mr-3 text-2xl">AI 코멘트</div>
           <p className="text-sm">
-            {aiEmpathy || "로딩 중이거나 기본 AI 코멘트"}
+            {aiEmpathy || "로딩 중"}
           </p>
         </div>
 
@@ -135,7 +160,7 @@ export default function TravelPlan() {
               }`}
             >
               {" "}
-              <span className="text-xs ml-1">{plan.day}</span>
+              <span className="text-xs ml-1">Day: {plan.day}</span>
             </button>
           ))}
         </div>
@@ -158,7 +183,12 @@ export default function TravelPlan() {
                   className="bg-blue-200 text-blue-800 px-2 py-1 rounded"
                   onClick={() =>
                     navigate("/PlaceDetailPage", {
-                      state: { placeId: item.placeId },
+                      state: {
+                        placeId: item.placeId,
+                        emotions: travelStyle?.emotions,
+                        companions: travelStyle?.companions,
+                        peopleCount: travelStyle?.peopleCount,
+                       },
                     })
                   }
                 >
@@ -173,8 +203,17 @@ export default function TravelPlan() {
 
         <div className="google-map">
           <h2 className="text-xl font-semibold mb-2">동선 추천</h2>
-          <KakaoMapView places={places} />
-          {/* <GoogleMapView places={places} /> */}
+          <KakaoMapView
+            places={
+              plans
+                .find((plan) => plan.day === activeDay)
+                ?.schedule?.map((item) => ({
+                  name: item.place,
+                  lat: item.latitude,
+                  lng: item.longitude,
+                })) || []
+            }
+          />
         </div>
 
         {/* Bottom Buttons */}
@@ -184,6 +223,12 @@ export default function TravelPlan() {
           </button>
           <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
             + 내 일정으로 담기
+          </button>
+          <button
+            onClick={() => navigate("/MyPlan")}
+            className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
+          >
+            저장한 일정 보기
           </button>
           <button
             onClick={() => navigate("/TravelStyleForm")}
