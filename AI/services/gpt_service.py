@@ -1,5 +1,6 @@
 import re
 import json, json5
+import uuid
 from typing import List, Optional
 from datetime import datetime
 from decimal import Decimal
@@ -267,6 +268,36 @@ def map_ai_places_to_db_places(ai_plans, places_data):
                     item['longitude'] = None
     return ai_plans
 
+def save_ai_schedule_places(plans: List[dict], db: Session):
+    schedule_id = str(uuid.uuid4())  # 일정 단위 UUID 생성
+
+    for day in plans:
+        for item in day["schedule"]:
+            place_id = item.get("placeId")
+            ai_comment = item.get("aiComment", "").lower()
+
+            if not place_id:
+                continue
+
+            # 장소 유형 추정
+            if "숙소" in ai_comment:
+                place_type = "accommodation"
+            elif "점심" in ai_comment or "저녁" in ai_comment or "식사" in ai_comment:
+                place_type = "meal"
+            else:
+                place_type = "destination"
+
+            db.execute(text("""
+                INSERT INTO ai_schedule_places (schedule_id, place_id, place_type)
+                VALUES (:schedule_id, :place_id, :place_type)
+            """), {
+                "schedule_id": schedule_id,
+                "place_id": place_id,
+                "place_type": place_type
+            })
+
+    db.commit()
+
 def get_ai_schedule(db: Session, start_city: str, end_city: str, start_date: str, end_date: str,
                     emotions: List[str], companions: List[str], peopleCount: int) -> ScheduleAIResponse:
     places_data = fetch_places_from_db(db, end_city)
@@ -290,11 +321,16 @@ def get_ai_schedule(db: Session, start_city: str, end_city: str, start_date: str
     mapped_plans = map_ai_places_to_db_places(parsed_json['plans'], places_data)
     parsed_json['plans'] = mapped_plans
     cleaned = clean_schedule(parsed_json, db)
+
+    #  인기 장소 로그 저장
+    save_ai_schedule_places(cleaned['plans'], db)
+
     return normalize_schedule_format(cleaned)
+
 
 app = FastAPI()
 
-@app.post("/api/ai/schedule", response_model=ScheduleAPIResponse)
+@app.post("/ai/schedule", response_model=ScheduleAPIResponse)
 def api_ai_schedule(req: ScheduleRequest, db: Session = Depends(get_db)):
     try:
         ai_result = get_ai_schedule(
