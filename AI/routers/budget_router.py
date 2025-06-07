@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 import services, schemas, crud
 from models import Budget
-from schemas import BudgetRequest, BudgetResponse, CategoryItem
+from schemas import BudgetRequest, BudgetResponse
 from services import budget_service
 router = APIRouter(prefix="/api/schedules", tags=["budgets"])
 
