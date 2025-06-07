@@ -128,7 +128,7 @@ class PlanBudgetResponse(BaseModel):
     categoryBreakdown: CategoryBreakdown
     aiComment: str
 
-#예산요청 스키마2
+#예산요청 스키마
 class SchedulePlace(BaseModel):
     time: str
     place: str
