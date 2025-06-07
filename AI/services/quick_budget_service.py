@@ -10,7 +10,6 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models import QuickBudget
 from config import settings 
 
 
@@ -98,23 +97,6 @@ def quick_budget(
         total_cost = food_cost + entry_fees + transport_cost
 
         comment = ask_gpt_budget_comment(total_cost, end_city, days=days, num_people=num_people)
-
-        # new_budget = QuickBudget(
-        #     start_city=start_city,
-        #     end_city=end_city,
-        #     start_date=start_date,
-        #     end_date=end_date,
-        #     num_people=num_people,
-        #     food_cost=food_cost,
-        #     entry_fees=entry_fees,
-        #     transport_cost=transport_cost,
-        #     total_budget=total_cost,
-        #     comment=comment,
-        #     created_at=datetime.utcnow()
-        # )
-        # db.add(new_budget)
-        # db.commit()
-        # db.refresh(new_budget)
 
         return {
             "food_cost": food_cost,

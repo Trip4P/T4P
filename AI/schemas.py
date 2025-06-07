@@ -117,30 +117,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# 예산 응답
-class DBBudgetResponse(BaseModel):
-    id: int
-    schedule_id: int
-    food_cost: int
-    entry_fees: int
-    transport_cost: int
-    total_budget: int
-    created_at: str 
-
-    class Config:
-        orm_mode = True
-
-# 예산 요청 (예: 일정에 포함된 장소 목록)
-class ScheduleItem(BaseModel):
-    place_id: str
-    time: Optional[str] = None
-    placeType: Optional[str] = None
-    place: Optional[str] = None
-
-# 예산 요청 본문
-class PlanBudgetRequest(BaseModel):
-    plans: Dict[str, List[ScheduleItem]]
-
 # 예산 응답 카테고리
 class CategoryBreakdown(BaseModel):
     식비: int
@@ -152,14 +128,15 @@ class PlanBudgetResponse(BaseModel):
     categoryBreakdown: CategoryBreakdown
     aiComment: str
 
-#예산요청 스키마2
+#예산요청 스키마
 class SchedulePlace(BaseModel):
     time: str
     place: str
-    placeId: int
+    placeId: str  
     pricelevel: int
     latitude: float
     longitude: float
+
 
 class PlanItem(BaseModel):
     day: int
@@ -168,10 +145,7 @@ class PlanItem(BaseModel):
 class BudgetRequest(BaseModel):
     plans: List[PlanItem]
     peopleCount: int
-
-class CategoryItem(BaseModel):
-    category: str
-    amount: int
+    endCity: str
 
 class BudgetResponse(BaseModel):
     totalBudget: int
