@@ -13,6 +13,7 @@
     "@tailwindcss/vite": "^4.1.7",
     "axios": "^1.9.0",
     "chart.js": "^4.4.9",
+    "prop-types": "^15.8.1",
     "react": "^19.1.0",
     "react-chartjs-2": "^5.3.0",
     "react-datepicker": "^8.3.0",

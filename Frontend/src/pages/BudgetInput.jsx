@@ -1,7 +1,6 @@
 // 사용자가 일정 추천 안 받고 여행 정보 입력하여 예산 뽑아주는 페이지 (시나리오 B)
 import { useState } from "react";
 import axios from "axios";
-import { Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -14,6 +13,8 @@ import {
 import DatePicker from "react-datepicker";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Chart from "../components/Chart";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 ChartJS.register(
   ArcElement,
@@ -37,11 +38,12 @@ const generateColors = (count) => {
 };
 
 const formatDateKorean = (date) =>
-  date?.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
+  date
+    ?.toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
     .replace(/\. /g, "-")
     .replace(/\./g, "");
 
@@ -55,46 +57,13 @@ export default function TravelBudgetInputPage() {
   const [budgetData, setBudgetData] = useState(null);
   const [aiComment, setAiComment] = useState("");
   const [totalBudget, setTotalBudget] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  // 💰 더미 예산 데이터
-  // const dummyBudgetData = {
-  //   labels: ["항공", "숙박", "식비", "교통", "기타"],
-  //   datasets: [
-  //     {
-  //       label: "예상 예산 (원)",
-  //       data: [300000, 500000, 200000, 100000, 50000],
-  //       backgroundColor: [
-  //         "#FF6384",
-  //         "#36A2EB",
-  //         "#FFCE56",
-  //         "#4BC0C0",
-  //         "#9966FF",
-  //       ],
-  //       borderWidth: 1,
-  //     },
-  //   ],
-  // };
-
-  // 옵션 (툴팁 포맷 등)
-  const chartOptions = {
-    plugins: {
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            return `${context.label}: ${context.raw.toLocaleString()}원`;
-          },
-        },
-      },
-      legend: {
-        position: "bottom",
-      },
-    },
-  };
-
   const fetchBudgetData = async () => {
     try {
+      setIsLoading(true);
       const res = await axios.post(`${VITE_API_BASE_URL}/api/budgets`, {
         startCity,
         endCity,
@@ -126,6 +95,8 @@ export default function TravelBudgetInputPage() {
       setTotalBudget(response.totalBudget);
     } catch (err) {
       console.error("API호출 실패", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -153,7 +124,7 @@ export default function TravelBudgetInputPage() {
               type="text"
               value={startCity}
               onChange={(e) => setStartCtiy(e.target.value)}
-              placeholder="ex) 서울"
+              placeholder="ex) 고속버스터미널"
               className="w-full border border-gray-300 rounded px-4 py-2"
             />
           </div>
@@ -164,7 +135,7 @@ export default function TravelBudgetInputPage() {
               type="text"
               value={endCity}
               onChange={(e) => setEndCity(e.target.value)}
-              placeholder="ex) 부산"
+              placeholder="ex) 잠실"
               className="w-full border border-gray-300 rounded px-4 py-2"
             />
           </div>
@@ -227,41 +198,45 @@ export default function TravelBudgetInputPage() {
           </div>
         </div>
 
-        {/* ✅ 예상 예산 결과 박스 */}
+        {isLoading && <LoadingSpinner />}
+
+        {/* 예상 예산 결과 박스 */}
         {showResult && budgetData && (
-          <div className="bg-gray-100 mt-10 p-6 rounded-lg shadow-md">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-300 rounded-full" />
-              {/* <p className="text-lg font-semibold text-gray-800">
-                예산 한줄평: 여행지 물가 기준으로는 꽤 여유로운 편이에요. 원하는
-                곳 마음껏 즐기세요!
-              </p> */}
-              <p className="text-lg font-semibold text-gray-800">{aiComment}</p>
-              <p className="text-xl font-bold text-center text-gray-800">
+          <div className="bg-white mt-10 p-8 rounded-xl shadow-lg border border-gray-200">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-44 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
+                  AI 코멘트
+                </div>
+                <p className="text-lg font-medium text-gray-800">{aiComment}</p>
+              </div>
+              <p className="text-xl font-bold text-gray-900">
                 총 예산: {totalBudget?.toLocaleString()}원
               </p>
             </div>
 
-            {/* 📊 예산 차트 */}
-            <div className="mt-8">
-              <h3 className="text-md font-semibold mb-2 text-gray-700">
-                카테고리별 예상 예산
-              </h3>
-              {/* <Doughnut data={dummyBudgetData} options={chartOptions} /> */}
-              <Doughnut data={budgetData} options={chartOptions} />
+            {/* 예산 차트 */}
+            <div className="mt-10">
+              <h3 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">카테고리별 예상 예산</h3>
+              <Chart
+                categoryBreakdown={budgetData.labels.map((label, idx) => ({
+                  [label]: budgetData.datasets[0].data[idx],
+                }))}
+                totalBudget={totalBudget}
+              />
             </div>
 
             {/* 버튼들 */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-end">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-end">
               <button
-                className="border border-gray-600 px-4 py-2 rounded hover:bg-gray-200"
+                className="border border-gray-400 px-5 py-2.5 rounded-lg hover:bg-gray-100 transition font-medium text-gray-700"
                 onClick={fetchBudgetData}
               >
                 예산 다시 추천 받기
               </button>
-              <button className="bg-black text-white px-4 py-2 rounded hover:bg-gray-900">
-                예산 저장하고 일정 보기
-              </button>
+              {/* <button className="bg-blue-700 text-white px-5 py-2.5 rounded-lg hover:bg-blue-800 transition font-medium">
+                ✅ 예산 저장하고 일정 보기
+              </button> */}
             </div>
           </div>
         )}

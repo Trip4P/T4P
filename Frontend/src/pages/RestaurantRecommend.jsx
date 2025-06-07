@@ -67,9 +67,14 @@ export default function RestaurantRecommendationPage() {
         {places.map((place, index) => (
           <div key={index} className="bg-white shadow-md rounded-xl p-4 mb-6">
             <div className="flex gap-4">
-              <div className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400 rounded-lg">
+              {/* <div className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400 rounded-lg">
                 음식 이미지
-              </div>
+              </div> */}
+              <img
+                src={place.imageUrl}
+                alt="맛집 썸네일"
+                className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400 rounded-lg"
+              />
               <div className="flex-1">
                 <h2 className="text-xl font-bold text-blue-900">
                   {place.name}

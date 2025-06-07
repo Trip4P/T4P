@@ -218,12 +218,12 @@ export default function TravelPlan() {
 
         {/* Bottom Buttons */}
         <div className="flex flex-wrap gap-2 mt-10">
-          <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
+          {/* <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
             🔄 다시 추천받기
-          </button>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
+          </button> */}
+          {/* <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
             + 내 일정으로 담기
-          </button>
+          </button> */}
           <button
             onClick={() => navigate("/MyPlan")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"

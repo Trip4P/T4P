@@ -6,6 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import Header from "../components/Header";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Footer from "../components/Footer";
+import Chart from "../components/Chart";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -61,26 +62,38 @@ const BudgetResultPage = () => {
     </>
   )
 
-  const chartLabels = categoryBreakdown.map((item) => Object.keys(item)[0]);
-  const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
+  // const chartLabels = categoryBreakdown.map((item) => Object.keys(item)[0]);
+  // const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
 
-  const data = {
-    labels: chartLabels,
-    datasets: [
-      {
-        label: "비용 비중",
-        // data: [300000, 150000, 180000, 90000],
-        data: chartData,
-        backgroundColor: [
-          "#3B82F6", // blue-500
-          "#60A5FA", // blue-400
-          "#93C5FD", // blue-300
-          "#BFDBFE", // blue-200
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  // const generateBlueColors = (count) => {
+  //   const colors = [];
+  //   for (let i = 0; i < count; i++) {
+  //     const hue = 220;
+  //     const saturation = 90;
+  //     const lightness = 40 + (i * (50 / count));
+  //     colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+  //   }
+  //   return colors;
+  // }
+
+  // const data = {
+  //   labels: chartLabels,
+  //   datasets: [
+  //     {
+  //       label: "비용 비중",
+  //       // data: [300000, 150000, 180000, 90000],
+  //       data: chartData,
+  //       backgroundColor: generateBlueColors(chartData.length),
+  //       //   [
+  //       //   "#3B82F6", // blue-500
+  //       //   "#60A5FA", // blue-400
+  //       //   "#93C5FD", // blue-300
+  //       //   "#BFDBFE", // blue-200
+  //       // ],
+  //       borderWidth: 1,
+  //     },
+  //   ],
+  // };
 
   return (
     <>
@@ -125,9 +138,9 @@ const BudgetResultPage = () => {
                   ₩ {totalBudget.toLocaleString()}
                 </p>
               </div>
-              <div className="w-64 mx-auto md:mx-0">
+              {/* <div className="w-64 mx-auto md:mx-0">
                 <Doughnut data={data} />
-                {/* 테스트 코드용 */}
+
                 <ul className="mt-4 text-sm text-center md:text-left">
                   {categoryBreakdown.map((item, idx) => {
                     const label = Object.keys(item)[0];
@@ -139,7 +152,8 @@ const BudgetResultPage = () => {
                     );
                   })}
                 </ul>
-              </div>
+            </div> */}
+            <Chart categoryBreakdown={categoryBreakdown} totalBudget={totalBudget} />
             </div>
           </section>
 
@@ -161,10 +175,6 @@ const BudgetResultPage = () => {
           </section>
         </div>
 
-        {/* Footer */}
-        <footer className="text-center text-sm text-gray-400 mt-16">
-          T4P &nbsp;|&nbsp; SPC 팀프로젝트 &nbsp;|&nbsp; 앗호
-        </footer>
       </div>
       <Footer/>
     </>
