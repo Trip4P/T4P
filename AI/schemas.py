@@ -133,7 +133,6 @@ class SchedulePlace(BaseModel):
     time: str
     place: str
     placeId: str  
-    pricelevel: int
     latitude: float
     longitude: float
 
