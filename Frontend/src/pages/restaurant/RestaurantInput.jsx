@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 const preferences = {
   companions: ["혼자", "친구와", "연인과", "배우자와", "아이와", "부모님과"],
@@ -104,7 +104,7 @@ export default function TasteProfilePage() {
               type="text"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              placeholder="ex) 해운대"
+              placeholder="ex) 잠실"
               className="w-full border border-gray-300 rounded px-4 py-2"
             />
           </div>

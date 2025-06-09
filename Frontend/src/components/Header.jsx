@@ -20,12 +20,12 @@ const Header = () => {
         </Link>
       </nav>
       <div className="flex gap-2">
-        <button className="text-sm text-blue-600">
+        {/* <button className="text-sm text-blue-600">
           <Link to="/Login">로그인</Link>
         </button>
         <button className="text-sm bg-blue-600 text-white px-4 py-1 rounded">
           <Link to="/Signup">회원가입</Link>
-        </button>
+        </button> */}
       </div>
     </header>
   );

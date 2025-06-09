@@ -3,14 +3,14 @@ import { Doughnut } from "react-chartjs-2";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import Header from "../components/Header";
-import LoadingSpinner from "../components/LoadingSpinner";
-import Footer from "../components/Footer";
-import Chart from "../components/Chart";
+import Header from "../../components/Header";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import Footer from "../../components/Footer";
+import Chart from "../../components/Chart";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const BudgetResultPage = () => {
+export default function BudgetResultPage() {
   // Dummy data for chart (to be replaced with backend data)
   const [endCity, setEndCity] = useState("");
   const [dateRange, setDateRange] = useState("");
@@ -22,37 +22,38 @@ const BudgetResultPage = () => {
 
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  useEffect(() => {
+  const fetchBudgetData = () => {
     const storedStyle = JSON.parse(localStorage.getItem("travelStyle"));
-    if (storedStyle) {
-      setEndCity(storedStyle.endCity || "");
-      setDateRange(`${storedStyle.startDate} ~ ${storedStyle.endDate}`);
-    }
-
     const travelPlan = JSON.parse(localStorage.getItem("travelPlan"));
-    console.log("travelPlan: " + travelPlan);
-    if (travelPlan) {
-      // endCity 추가
-      if (storedStyle && storedStyle.endCity) {
-        travelPlan.endCity = storedStyle.endCity;
-      }
 
-      if (travelPlan.peopleCount) {
-        setPeopleCount(travelPlan.peopleCount);
-      }
-      axios
-        .post(`${VITE_API_BASE_URL}/api/schedules/budgets`, travelPlan)
-        .then((res) => {
-          setTotalBudget(res.data.totalBudget);
-          setCategoryBreakdown(res.data.categoryBreakdown);
-          setAiComment(res.data.aiComment);
-          setIsLoading(false);
-        })
-        .catch((err) => {
-          console.error("예산 요청 실패", err)
-          setIsLoading(false);
-        });
+    if (storedStyle && storedStyle.endCity) {
+      travelPlan.endCity = storedStyle.endCity;
     }
+
+    if (travelPlan.peopleCount) {
+      setPeopleCount(travelPlan.peopleCount);
+    }
+
+    setEndCity(storedStyle?.endCity || "");
+    setDateRange(`${storedStyle?.startDate} ~ ${storedStyle?.endDate}`);
+    setIsLoading(true);
+
+    axios
+      .post(`${VITE_API_BASE_URL}/api/schedules/budgets`, travelPlan)
+      .then((res) => {
+        setTotalBudget(res.data.totalBudget);
+        setCategoryBreakdown(res.data.categoryBreakdown);
+        setAiComment(res.data.aiComment);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error("예산 요청 실패", err);
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchBudgetData();
   }, []);
 
   if (isLoading) return (
@@ -61,39 +62,6 @@ const BudgetResultPage = () => {
       <LoadingSpinner />
     </>
   )
-
-  // const chartLabels = categoryBreakdown.map((item) => Object.keys(item)[0]);
-  // const chartData = categoryBreakdown.map((item) => Object.values(item)[0]);
-
-  // const generateBlueColors = (count) => {
-  //   const colors = [];
-  //   for (let i = 0; i < count; i++) {
-  //     const hue = 220;
-  //     const saturation = 90;
-  //     const lightness = 40 + (i * (50 / count));
-  //     colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
-  //   }
-  //   return colors;
-  // }
-
-  // const data = {
-  //   labels: chartLabels,
-  //   datasets: [
-  //     {
-  //       label: "비용 비중",
-  //       // data: [300000, 150000, 180000, 90000],
-  //       data: chartData,
-  //       backgroundColor: generateBlueColors(chartData.length),
-  //       //   [
-  //       //   "#3B82F6", // blue-500
-  //       //   "#60A5FA", // blue-400
-  //       //   "#93C5FD", // blue-300
-  //       //   "#BFDBFE", // blue-200
-  //       // ],
-  //       borderWidth: 1,
-  //     },
-  //   ],
-  // };
 
   return (
     <>
@@ -138,39 +106,23 @@ const BudgetResultPage = () => {
                   ₩ {totalBudget.toLocaleString()}
                 </p>
               </div>
-              {/* <div className="w-64 mx-auto md:mx-0">
-                <Doughnut data={data} />
-
-                <ul className="mt-4 text-sm text-center md:text-left">
-                  {categoryBreakdown.map((item, idx) => {
-                    const label = Object.keys(item)[0];
-                    const value = Object.values(item)[0];
-                    return (
-                      <li key={idx}>
-                        {label}: ₩ {value.toLocaleString()}
-                      </li>
-                    );
-                  })}
-                </ul>
-            </div> */}
             <Chart categoryBreakdown={categoryBreakdown} totalBudget={totalBudget} />
             </div>
           </section>
 
           {/* 설명 & 버튼 */}
           <section className="text-center space-y-4">
-            {/* <p className="text-sm text-blue-600">
-              예산 한줄평: 여행지 물가 기준으로는 꽤 여유로운 편이에요. 원하는
-              곳 마음껏 즐기세요!
-            </p> */}
             <p className="text-sm text-blue-600">{aiComment}</p>
             <div className="space-x-4">
-              <button className="bg-white border border-blue-500 text-blue-600 rounded-lg px-4 py-2 hover:bg-blue-100 transition">
+              <button
+                onClick={fetchBudgetData}
+                className="bg-white border border-blue-500 text-blue-600 rounded-lg px-4 py-2 hover:bg-blue-100 transition"
+              >
                 예산 다시 추천 받기
               </button>
-              <button className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition">
+              {/* <button className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition">
                 예산 저장하고 일정 보기
-              </button>
+              </button> */}
             </div>
           </section>
         </div>
@@ -180,5 +132,3 @@ const BudgetResultPage = () => {
     </>
   );
 };
-
-export default BudgetResultPage;

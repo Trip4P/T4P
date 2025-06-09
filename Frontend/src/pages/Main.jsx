@@ -1,9 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import axios from "axios";
+
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function MainPage() {
+  const [popularPlaces, setPopularPlaces] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${VITE_API_BASE_URL}/popular-places`)
+      .then((res) => {
+        console.log("🔥 인기 여행지 응답:", res.data);
+        setPopularPlaces(res.data);
+      })
+      .catch((err) => {
+        console.error("인기 여행지 API 호출 실패:", err);
+      });
+  }, []);
+
   return (
     <div className="bg-white text-gray-800">
       <Header />
@@ -43,7 +59,7 @@ export default function MainPage() {
         <div className="bg-white shadow-md rounded p-6 text-center">
           <h3 className="font-semibold mb-2">맛집 추천</h3>
           <p className="text-sm text-gray-600">
-            현지 맛집 정보를 기반으로 맛집을 추천해드립니다.
+            사용자 성향을 기반으로 맛집을 추천해드립니다.
           </p>
         </div>
       </section>
@@ -52,12 +68,19 @@ export default function MainPage() {
       <section className="px-8 pb-12">
         <h2 className="text-lg font-semibold mb-4">인기 여행지</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {[...Array(12)].map((_, i) => (
+          {popularPlaces.slice(0, 16).map((place, i) => (
             <div
-              key={i}
-              className="bg-gray-300 h-32 rounded text-center text-white flex items-center justify-center"
+              key={place.placeId || i}
+              className="h-32 rounded overflow-hidden relative shadow"
             >
-              image
+              <img
+                src={place.imageUrl}
+                alt={place.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">
+                {place.name}
+              </div>
             </div>
           ))}
         </div>

@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ProgressBar from "../components/ProgressBar";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import ProgressBar from "../../components/ProgressBar";
 //import GoogleMapView from "../components/GoogleMapView";
-import PlaceDetailPage from "./PlaceDetail";
-import KakaoMapView from "../components/KakaoMapView";
+import PlaceDetail from "./PlaceDetail";
+import KakaoMapView from "../../components/KakaoMapView";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
@@ -21,39 +21,6 @@ export default function TravelPlan() {
   const [travelStyle, setTravelStyle] = useState(null);
 
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-  // const places = [
-  //   {
-  //     name: "경복궁",
-  //     lat: 37.579617,
-  //     lng: 126.977041,
-  //     description: "조선의 정궁, 전통과 아름다움의 상징",
-  //   },
-  //   {
-  //     name: "북촌한옥마을",
-  //     lat: 37.582604,
-  //     lng: 126.983998,
-  //     description: "한옥의 고즈넉함과 인생샷 스팟!",
-  //   },
-  //   {
-  //     name: "광장시장 육회골목",
-  //     lat: 37.570376,
-  //     lng: 126.999076,
-  //     description: "서울 3대 육회, 광장시장 필수코스",
-  //   },
-  //   {
-  //     name: "N서울타워",
-  //     lat: 37.551169,
-  //     lng: 126.988227,
-  //     description: "서울 전경 한눈에, 야경 명소!",
-  //   },
-  //   {
-  //     name: "카페 온더플레이트",
-  //     lat: 37.545226,
-  //     lng: 127.004885,
-  //     description: "한강뷰 감성카페 ☕️🌉",
-  //   },
-  // ];
 
   useEffect(() => {
     async function fetchData() {
@@ -84,7 +51,7 @@ export default function TravelPlan() {
         setTags(res.data.tags || []);
         setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
 
-        // 🔐 방어 코드
+        // 방어 코드
         if (Array.isArray(res.data.plans)) {
           setPlans(res.data.plans);
           localStorage.setItem("travelPlan", JSON.stringify({
@@ -160,7 +127,7 @@ export default function TravelPlan() {
               }`}
             >
               {" "}
-              <span className="text-xs ml-1">Day: {plan.day}</span>
+              <span className="text-xs ml-1">Day {plan.day}</span>
             </button>
           ))}
         </div>
@@ -182,7 +149,7 @@ export default function TravelPlan() {
                 <button
                   className="bg-blue-200 text-blue-800 px-2 py-1 rounded"
                   onClick={() =>
-                    navigate("/PlaceDetailPage", {
+                    navigate("/PlaceDetail", {
                       state: {
                         placeId: item.placeId,
                         emotions: travelStyle?.emotions,
