@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ProgressBar from "../components/ProgressBar";
-import GoogleMapView from "../components/GoogleMapView";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import ProgressBar from "../../components/ProgressBar";
+import GoogleMapView from "../../components/GoogleMapView";
 
 export default function RestaurantRecommendationPage() {
   const navigate = useNavigate();
@@ -67,9 +67,6 @@ export default function RestaurantRecommendationPage() {
         {places.map((place, index) => (
           <div key={index} className="bg-white shadow-md rounded-xl p-4 mb-6">
             <div className="flex gap-4">
-              {/* <div className="bg-blue-100 w-32 h-32 flex items-center justify-center text-blue-400 rounded-lg">
-                음식 이미지
-              </div> */}
               <img
                 src={place.imageUrl}
                 alt="맛집 썸네일"
@@ -99,7 +96,7 @@ export default function RestaurantRecommendationPage() {
                       navigate("/RestaurantDetail", {
                         state: {
                           placeId: place.placeId,
-                          companions: tasteProfile?.companion,
+                          companions: tasteProfile?.companions,
                           foodPreferences: tasteProfile?.foodPreference,
                           atmospheres: tasteProfile?.atmospheres,
                         },
