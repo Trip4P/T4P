@@ -29,15 +29,71 @@ price_map = {
     4: 40000
 }
 
-# 숙박비 계산 함수
-def calculate_accommodation_cost(accommodation_price: int, nights: int, num_people: int) -> int:
-    if num_people <= 2:
-        total_cost = accommodation_price * nights
-    else:
-        extra_people = num_people - 2
-        extra_fee_per_night = accommodation_price * 0.3 * extra_people
-        total_cost = (accommodation_price + extra_fee_per_night) * nights
-    return int(total_cost)
+def get_place_price_info(db: Session, place_id: str) -> Dict:
+    """
+    place_id 기준으로 Meals, Accommodations, Destinations 테이블에서 pricelevel이나 price 조회
+    """
+    # Meals 조회 (식사)
+    meal = db.query(models.Meal).filter(models.Meal.place_id == place_id).first()
+    if meal:
+        return {
+            "type": "meal",
+            "pricelevel": meal.price_level,  # 주의: price_level 컬럼명
+            "price": None
+        }
+
+    # Accommodations 조회 (숙박)
+    accommodation = db.query(models.Accommodation).filter(models.Accommodation.place_id == place_id).first()
+    if accommodation:
+        return {
+            "type": "accommodation",
+            "pricelevel": None,
+            "price": accommodation.price
+        }
+
+    # Destinations 조회 (관광지)
+    destination = db.query(models.Destination).filter(models.Destination.place_id == place_id).first()
+    if destination:
+        return {
+            "type": "destination",
+            "pricelevel": destination.price_level,
+            "price": None
+        }
+
+    # 못 찾았을 때
+    return {
+        "type": "unknown",
+        "pricelevel": None,
+        "price": None
+    }
+
+
+def calculate_accommodation_cost(db: Session, plan_data, num_people: int = 1) -> int:
+    total_cost = 0
+
+    # 마지막 날 제외하고 숙소 계산
+    for day_plan in plan_data.plans[:-1]:
+        schedule = day_plan.schedule
+        if not schedule:
+            continue  # 일정이 비어있는 경우 방어
+
+        last_place = schedule[-1]
+        place_id  = last_place.placeId
+        place_info = get_place_price_info(db, place_id)
+
+        if place_info["type"] == "accommodation" and place_info["price"] is not None:
+            price = place_info["price"]
+            if num_people <= 2:
+                day_cost = price
+            else:
+                extra_people = num_people - 2
+                extra_fee = price * 0.3 * extra_people
+                day_cost = price + extra_fee
+
+            total_cost += int(day_cost)
+
+    return total_cost
+
 
 # 거리 계산 (haversine)
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -97,34 +153,40 @@ def get_public_transport_fare(lat1, lon1, lat2, lon2):
 # 교통비 전체 계산
 def calculate_transport_cost(plan_data, num_people: int = 1) -> int:
     total_cost = 0
-    previous_day_last_place = None
 
-    for day_plan in plan_data.plans:
+
+    for i, day_plan in enumerate(plan_data.plans):
         schedule = day_plan.schedule
 
-        if previous_day_last_place:
-            first_place = schedule[0]
-            fare = calculate_fare_between(previous_day_last_place, first_place, num_people)
-            total_cost += fare
+        if i > 0:
+            previous_day_schedule = plan_data.plans[i - 1].schedule
+            previous_day_last_place = previous_day_schedule[-1]
+            today_first_place = schedule[0]
 
-        for i in range(len(schedule) - 1):
-            loc1, loc2 = schedule[i], schedule[i + 1]
+            fare = calculate_fare_between(previous_day_last_place, today_first_place, num_people)
+            total_cost += fare  
+
+        for j in range(len(schedule) - 1):
+            loc1, loc2 = schedule[j], schedule[j + 1]
             fare = calculate_fare_between(loc1, loc2, num_people)
             total_cost += fare
 
-        previous_day_last_place = schedule[-1]
-
     return total_cost
 
+
 # 식사비 계산
-def calculate_food_cost(plan_data, num_people: int = 1) -> int:
+def calculate_food_cost(db: Session, plan_data, num_people: int = 1) -> int:
     total_cost = 0
     for day_plan in plan_data.plans:
         for item in day_plan.schedule:
-            price_level = getattr(item, "pricelevel", 0)
-            avg_price = price_map.get(price_level, 0)
-            total_cost += avg_price * num_people
+            place_id = item.placeId
+            place_info = get_place_price_info(db, place_id)
+            if place_info["type"] == "meal":
+                pricelevel = place_info["pricelevel"]
+                avg_price = price_map.get(pricelevel, 0)
+                total_cost += avg_price * num_people
     return total_cost
+
 
 # GPT 응답 파싱 → 숫자만 추출 + 무료 처리
 def parse_fee(response_text: str) -> int:
@@ -165,20 +227,36 @@ def ask_gpt_for_entry_fee(place_name: str) -> int:
         fee = 0
     return fee
 
-
-def estimate_entry_fees(plan_data, num_people: int = 1) -> int:
+def estimate_entry_fees(db: Session, plan_data, num_people: int = 1) -> int:
     total_fee = 0
     for day_plan in plan_data.plans:
         schedule = day_plan.schedule
-        
-        
-        for item in schedule[:-1]: #마지막 장소가 숙소라는 가정하에 숙소 제외 계산
-            place_name = getattr(item, "place", None)
-            pricelevel = getattr(item, "pricelevel", 0)
-            if pricelevel == 0 and place_name:
-                fee = ask_gpt_for_entry_fee(place_name)
-                total_fee += fee * num_people
+
+        for item in schedule[:-1]:  # 마지막 장소 숙소라서 제외
+            place_id = item.placeId
+            place_name = item.place
+            place_info = get_place_price_info(db, place_id)
+
+            if place_info["type"] == "destination":
+                pricelevel = place_info["pricelevel"]
+
+                if pricelevel is None:
+                    # pricelevel 정보 자체가 없으면 GPT로 추정
+                    if place_name:
+                        fee = ask_gpt_for_entry_fee(place_name)
+                        total_fee += fee * num_people
+
+                elif pricelevel == 0:
+                    # 무료 → 비용 0원
+                    continue
+
+                else:
+                    # price_map 기준으로 계산
+                    avg_price = price_map.get(pricelevel, 0)
+                    total_fee += avg_price * num_people
+
     return total_fee
+
 
 # GPT 예산 감성 코멘트
 def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_people: int = 1) -> str:
@@ -214,25 +292,10 @@ def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_p
 def calculate_total_budget_from_plan(db: Session, plan_data: BudgetRequest) -> Dict:
     num_people = plan_data.peopleCount
 
-    food_cost = calculate_food_cost(plan_data, num_people)
-    entry_fees = estimate_entry_fees(plan_data, num_people)
+    food_cost = calculate_food_cost(db, plan_data, num_people)
+    entry_fees = estimate_entry_fees(db, plan_data, num_people)
     transport_cost = calculate_transport_cost(plan_data, num_people)
-
-    # 숙박비 계산
-    first_day_schedule = plan_data.plans[0].schedule
-    last_item = first_day_schedule[-1]
-    accommodation_place_id = getattr(last_item, "placeId", None)
-
-    accommodation_price = 0
-    if accommodation_place_id:
-        accommodation = db.query(models.Accommodation).filter(
-            models.Accommodation.place_id == accommodation_place_id
-        ).first()
-        if accommodation:
-            accommodation_price = accommodation.price
-
-    nights = max(len(plan_data.plans) - 1, 0)
-    accommodation_cost = calculate_accommodation_cost(accommodation_price, nights, num_people)
+    accommodation_cost = calculate_accommodation_cost(db, plan_data, num_people)
 
     total_cost = food_cost + entry_fees + transport_cost + accommodation_cost
 
