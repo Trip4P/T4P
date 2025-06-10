@@ -188,12 +188,12 @@ export default function TravelPlan() {
           {/* <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
             + 내 일정으로 담기
           </button> */}
-          <button
+          {/* <button
             onClick={() => navigate("/MyPlan")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
           >
             저장한 일정 보기
-          </button>
+          </button> */}
           <button
             onClick={() => navigate("/TravelStyleForm")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
