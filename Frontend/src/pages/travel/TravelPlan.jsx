@@ -181,7 +181,7 @@ export default function TravelPlan() {
         </div>
 
         {/* Bottom Buttons */}
-        <div className="flex flex-wrap gap-2 mt-10">
+        <div className="flex justify-between items-center mt-10 w-full">
           {/* <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
             🔄 다시 추천받기
           </button> */}
