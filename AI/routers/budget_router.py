@@ -15,11 +15,13 @@ def calculate_budget_from_schedule_data(request: BudgetRequest, db: Session = De
         "교통": raw_result["transport_cost"],
         "숙소": raw_result["accommodation_cost"],
         "식비": raw_result["food_cost"],
-        "관광": raw_result["entry_fees"]
-    }
+        }
+    
+    if raw_result["entry_fees"] > 0:
+        category_dict["관광"] = raw_result["entry_fees"]
 
-    # key, value 쌍을 각각 하나의 딕셔너리로 만들어 리스트로 변환
-    category_breakdown_list = [{k: v} for k, v in category_dict.items()]
+    category_breakdown_list = [{k: v} for k, v in category_dict.items() if v > 0]
+    # 
 
     return BudgetResponse(
         totalBudget=raw_result["total_cost"],
