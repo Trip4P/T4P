@@ -121,7 +121,7 @@ export default function RestaurantRecommendationPage() {
             🔄 다시 추천받기
           </button>
           <button
-            onClick={() => navigate("/TravelStyleForm")}
+            onClick={() => navigate("/RestaurantInput")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
           >
             성향 입력 다시하기
