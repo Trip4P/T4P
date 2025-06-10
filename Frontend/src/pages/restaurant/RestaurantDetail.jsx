@@ -140,7 +140,7 @@ export default function RestaurantDetailPage() {
                 <p>{placeData.reviewHighlights.review}</p>
               </div>
             </div>
-            <div className="mt-2">
+            {/* <div className="mt-2">
               <p className="text-sm mb-1">
                 만족도{" "}
                 <span className="font-semibold">{placeData.satisfaction}%</span>
@@ -148,7 +148,7 @@ export default function RestaurantDetailPage() {
               <div className="w-full h-2 bg-gray-200 rounded-full">
                 <div className="w-[87%] h-full bg-blue-500 rounded-full" />
               </div>
-            </div>
+            </div> */}
             <div className="mt-3 flex gap-2 flex-wrap text-sm">
               {placeData.reviewKeywords.map((tag, i) => (
                 <span

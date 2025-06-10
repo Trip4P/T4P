@@ -10,7 +10,7 @@ const categories = [
   "💗 설레는",
   "🙂 평범한",
   "😮 놀란",
-  "😣 불쾌한",
+  "🤢 불쾌한",
   "😨 두려운",
   "😢 슬픈",
   "😡 화나는",
@@ -47,25 +47,15 @@ export default function TravelStyleForm() {
   return (
     <>
       <Header />
-      <div className="max-w-4xl mx-auto py-16 px-4">
-        <h1 className="text-2xl font-bold text-center mb-2">여행 성향 분석</h1>
-        <p className="text-center text-gray-500 mb-10">
+      <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white p-6">
+        <h1 className="text-3xl font-bold text-center text-blue-900 mb-2">여행 성향 분석</h1>
+        <p className="text-center text-blue-700 mb-10">
           나의 여행 스타일을 분석하여 맞춤형 여행 코스를 추천해드립니다.
         </p>
 
-        {/* 출발지 입력 */}
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">여행 출발지</h2>
-          <input
-            type="text"
-            value={startCity}
-            onChange={(e) => setStartCity(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            placeholder="ex) 서울역"
-          />
-
+        <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
           {/* 목적지 입력 */}
-          <h2 className="text-lg font-semibold mt-4 mb-4">여행 목적지</h2>
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">여행 목적지</h2>
           <input
             type="text"
             value={endCity}
@@ -75,8 +65,8 @@ export default function TravelStyleForm() {
           />
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">여행 기간</h2>
+        <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">여행 기간</h2>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex flex-col">
               <label className="mb-1 font-medium">여행 시작일</label>
@@ -108,8 +98,8 @@ export default function TravelStyleForm() {
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">현재 나의 감정</h2>
+        <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">현재 나의 감정</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {categories.map((item) => (
               <label key={item} className="flex items-center gap-2">
@@ -131,8 +121,8 @@ export default function TravelStyleForm() {
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-10">
-          <h2 className="text-lg font-semibold mb-4">누구와 떠나나요</h2>
+        <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+          <h2 className="text-lg font-semibold text-blue-700 mb-4">누구와 떠나나요</h2>        
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {companionBoxes.map((item) => (
               <label key={item} className="flex items-center gap-2">
@@ -153,7 +143,7 @@ export default function TravelStyleForm() {
             ))}
           </div>
 
-          <h2 className="text-lg font-semibold mt-4 mb-4">몇 명이서 떠나나요</h2>
+          <h2 className="text-lg font-semibold text-blue-700 mt-5 mb-4">몇 명이서 떠나나요</h2>
           <div className="flex items-center space-x-4">
             {/* <label className="text-gray-700 font-medium">인원수:</label> */}
             <input
@@ -171,7 +161,6 @@ export default function TravelStyleForm() {
           <button
             onClick={() => {
               const travelStyleDate = {
-                startCity,
                 endCity,
                 startDate: startDate ? formatDateKorean(startDate) : null,
                 endDate: endDate ? formatDateKorean(endDate) : null,

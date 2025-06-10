@@ -112,6 +112,9 @@ export default function TasteProfilePage() {
           <div className="text-center mt-10">
             <button
               onClick={() => {
+                // Clear previous 추천 결과 from localStorage before navigating
+                localStorage.removeItem("savedAiComment");
+                localStorage.removeItem("savedPlaces");
                 const tasteProfile = {
                   companions: selectedCompanions,
                   foodPreference: selectedFoodPreferences,
