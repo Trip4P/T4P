@@ -161,9 +161,6 @@ export default function TravelPlan() {
                 >
                   상세정보
                 </button>
-                <button className="bg-blue-200 text-blue-800 px-2 py-1 rounded">
-                  수정
-                </button>
               </div>
             </div>
           ))}
