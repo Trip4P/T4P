@@ -64,6 +64,7 @@ export default function TravelBudgetInputPage() {
   const fetchBudgetData = async () => {
     try {
       setIsLoading(true);
+      setShowResult(false);
       const res = await axios.post(`${VITE_API_BASE_URL}/api/budgets`, {
         startCity,
         endCity,
@@ -214,10 +215,10 @@ export default function TravelBudgetInputPage() {
                 총 예산: {totalBudget?.toLocaleString()}원
               </p>
             </div>
+            <h3 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2 mt-5">카테고리별 예상 예산</h3>
 
             {/* 예산 차트 */}
-            <div className="mt-10">
-              <h3 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">카테고리별 예상 예산</h3>
+            <div className="mt-10 flex justify-center">
               <Chart
                 categoryBreakdown={budgetData.labels.map((label, idx) => ({
                   [label]: budgetData.datasets[0].data[idx],
@@ -227,7 +228,7 @@ export default function TravelBudgetInputPage() {
             </div>
 
             {/* 버튼들 */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-end">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 className="border border-gray-400 px-5 py-2.5 rounded-lg hover:bg-gray-100 transition font-medium text-gray-700"
                 onClick={fetchBudgetData}

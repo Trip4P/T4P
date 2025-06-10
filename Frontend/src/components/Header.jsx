@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 const Header = () => {
   return (
     <header className="flex justify-between items-center px-8 py-4 shadow">
-      <Link to="/" className="text-xl font-bold text-blue-600">
+      <Link to="/" className="flex items-center text-xl font-bold text-blue-600">
+        <img src="/logo.png" alt="로고" className="w-8 mr-2 h-auto"/>
         거기 어때
       </Link>
       <nav className="flex gap-6 text-sm">

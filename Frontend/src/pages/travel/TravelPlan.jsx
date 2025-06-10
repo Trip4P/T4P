@@ -161,9 +161,6 @@ export default function TravelPlan() {
                 >
                   상세정보
                 </button>
-                <button className="bg-blue-200 text-blue-800 px-2 py-1 rounded">
-                  수정
-                </button>
               </div>
             </div>
           ))}
@@ -184,19 +181,19 @@ export default function TravelPlan() {
         </div>
 
         {/* Bottom Buttons */}
-        <div className="flex flex-wrap gap-2 mt-10">
+        <div className="flex justify-between items-center mt-10 w-full">
           {/* <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
             🔄 다시 추천받기
           </button> */}
           {/* <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
             + 내 일정으로 담기
           </button> */}
-          <button
+          {/* <button
             onClick={() => navigate("/MyPlan")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
           >
             저장한 일정 보기
-          </button>
+          </button> */}
           <button
             onClick={() => navigate("/TravelStyleForm")}
             className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg"
