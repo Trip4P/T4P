@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 from openai import OpenAI
 import requests
 import sys
+from functools import lru_cache
+import aiohttp
+import asyncio
+
 import os
+
 
 # 현재 파일 기준 AI 폴더 경로
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -105,7 +110,7 @@ def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 # 교통요금 계산 로직
-def calculate_fare_between(loc1, loc2, num_people):
+async def calculate_fare_between(loc1, loc2, num_people):
     lat1, lon1 = getattr(loc1, "latitude", None), getattr(loc1, "longitude", None)
     lat2, lon2 = getattr(loc2, "latitude", None), getattr(loc2, "longitude", None)
     if None in (lat1, lon1, lat2, lon2):
@@ -115,7 +120,7 @@ def calculate_fare_between(loc1, loc2, num_people):
     if dist < 2.0:
         return 0
 
-    fare = get_public_transport_fare(lat1, lon1, lat2, lon2)
+    fare = await async_get_public_transport_fare(lat1, lon1, lat2, lon2)
     if fare == 0:
         if dist < 5:
             fare = 1450
@@ -126,12 +131,18 @@ def calculate_fare_between(loc1, loc2, num_people):
 
     return fare * num_people
 
+
 # ODSAY API 호출 (실패시 0 반환)
-def get_public_transport_fare(lat1, lon1, lat2, lon2):
-    api_key = settings.ODSAY_API_KEY
+odsay_cache = {}
+
+async def async_get_public_transport_fare(lat1, lon1, lat2, lon2):
+    key = f"{lat1:.5f}-{lon1:.5f}-{lat2:.5f}-{lon2:.5f}"
+    if key in odsay_cache:
+        return odsay_cache[key]
+
     url = "https://api.odsay.com/v1/api/searchPubTransPathT"
     params = {
-        "apiKey": api_key,
+        "apiKey": settings.ODSAY_API_KEY,
         "SX": lon1,
         "SY": lat1,
         "EX": lon2,
@@ -139,39 +150,39 @@ def get_public_transport_fare(lat1, lon1, lat2, lon2):
         "OPT": 0
     }
     try:
-        response = requests.get(url, params=params)
-        if response.status_code != 200:
-            return 0
-        data = response.json()
-        if "result" not in data or "path" not in data["result"] or not data["result"]["path"]:
-            return 0
-        fare = data["result"]["path"][0]["info"].get("payment")
-        return fare if fare else 0
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as resp:
+                data = await resp.json()
+                fare = data["result"]["path"][0]["info"].get("payment", 0)
+                odsay_cache[key] = fare
+                return fare
     except:
         return 0
 
-# 교통비 전체 계산
-def calculate_transport_cost(plan_data, num_people: int = 1) -> int:
-    total_cost = 0
 
+# 교통비 전체 계산
+async def calculate_transport_cost(plan_data, num_people: int = 1) -> int:
+    tasks = []
 
     for i, day_plan in enumerate(plan_data.plans):
         schedule = day_plan.schedule
+        if not schedule:
+            continue
 
+        # 하루 시작 이동 (전날 → 오늘 첫 장소)
         if i > 0:
-            previous_day_schedule = plan_data.plans[i - 1].schedule
-            previous_day_last_place = previous_day_schedule[-1]
-            today_first_place = schedule[0]
+            prev_schedule = plan_data.plans[i - 1].schedule
+            if prev_schedule:
+                tasks.append(calculate_fare_between(prev_schedule[-1], schedule[0], num_people))
 
-            fare = calculate_fare_between(previous_day_last_place, today_first_place, num_people)
-            total_cost += fare  
-
+        # 당일 내 이동
         for j in range(len(schedule) - 1):
             loc1, loc2 = schedule[j], schedule[j + 1]
-            fare = calculate_fare_between(loc1, loc2, num_people)
-            total_cost += fare
+            tasks.append(calculate_fare_between(loc1, loc2, num_people))
 
-    return total_cost
+    fares = await asyncio.gather(*tasks)
+    return sum(fares)
+
 
 
 # 식사비 계산
@@ -187,73 +198,71 @@ def calculate_food_cost(db: Session, plan_data, num_people: int = 1) -> int:
                 total_cost += avg_price * num_people
     return total_cost
 
-
-# GPT 응답 파싱 → 숫자만 추출 + 무료 처리
-def parse_fee(response_text: str) -> int:
-    response_text = response_text.strip()
-    
-    if '무료' in response_text:
-        return 0
-    
-    match = re.search(r'\d+', response_text)
-    return int(match.group()) if match else 0
-
-def ask_gpt_for_entry_fee(place_name: str) -> int:
+async def async_ask_gpt_for_entry_fee(place_name: str) -> int:
     short_name = place_name[:50]
     prompt = (
-    f"'{short_name}'은 한국의 관광지 또는 체험형 시설입니다. "
-    f"이 시설은 일반적으로 입장료나 체험비용이 발생할 수 있습니다. "
-    f"해당 장소의 평균 입장료 또는 체험비용을 1인당 기준으로 한국 원화로 알려주세요. "
-    f"가능하면 최근 2024년~2025년 한국 기준 가격을 참고해 추정해줘. "
-    f"만약 입장료가 없거나 무료 시설이라면 반드시 '0'으로 응답해줘. "
-    f"반드시 숫자만 단위 없이 정수 형태로 응답해줘. "
-    f"예: 15000"
-)
+        f"'{short_name}'은 한국의 관광지 또는 체험형 시설입니다. "
+        f"이 시설은 일반적으로 입장료나 체험비용이 발생할 수 있습니다. "
+        f"해당 장소의 평균 입장료 또는 체험비용을 1인당 기준으로 한국 원화로 알려주세요. "
+        f"가능하면 최근 2024년~2025년 한국 기준 가격을 참고해 추정해줘. "
+        f"만약 입장료가 없거나 무료 시설이라면 반드시 '0'으로 응답해줘. "
+        f"반드시 숫자만 단위 없이 정수 형태로 응답해줘. "
+        f"예: 15000"
+    )
+    headers = {
+        "Authorization": f"Bearer {settings.OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    json_data = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 10,
+        "temperature": 0.3
+    }
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=10,
-            temperature=0.3,
-        )
-        response_text = response.choices[0].message.content.strip()
-        print(f"[GPT 입장료 추정] {place_name} → GPT 응답: {response_text}")
-        fee = parse_fee(response_text)
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://api.openai.com/v1/chat/completions", headers=headers, json=json_data) as resp:
+                result = await resp.json()
+                content = result["choices"][0]["message"]["content"]
+                return int(re.search(r'\d+', content).group()) if content else 0
     except Exception as e:
-        print(f"입장료 추출 실패: {e}")
-        fee = 0
-    return fee
+        print(f"[GPT 오류] {place_name}: {e}")
+        return 0
 
-def estimate_entry_fees(db: Session, plan_data, num_people: int = 1) -> int:
+async def estimate_entry_fees(db: Session, plan_data, num_people: int = 1) -> int:
     total_fee = 0
+    visited_place_ids = set()
+    tasks = []
+    people_counts = []
+    
     for day_plan in plan_data.plans:
         schedule = day_plan.schedule
-
-        for item in schedule[:-1]:  # 마지막 장소 숙소라서 제외
+        for item in schedule[:-1]:  # 마지막은 숙소일 가능성 높으므로 제외
             place_id = item.placeId
             place_name = item.place
+
+            if place_id in visited_place_ids:
+                continue
+            visited_place_ids.add(place_id)
+
             place_info = get_place_price_info(db, place_id)
 
             if place_info["type"] == "destination":
                 pricelevel = place_info["pricelevel"]
-
-                if pricelevel is None:
-                    # pricelevel 정보 자체가 없으면 GPT로 추정
-                    if place_name:
-                        fee = ask_gpt_for_entry_fee(place_name)
-                        total_fee += fee * num_people
-
-                elif pricelevel == 0:
-                    # 무료 → 비용 0원
-                    continue
-
-                else:
-                    # price_map 기준으로 계산
+                if pricelevel is None and place_name:
+                    tasks.append(async_ask_gpt_for_entry_fee(place_name))
+                    people_counts.append(num_people)
+                elif pricelevel and pricelevel > 0:
                     avg_price = price_map.get(pricelevel, 0)
                     total_fee += avg_price * num_people
+
+    if tasks:
+        results = await asyncio.gather(*tasks)
+        for fee, count in zip(results, people_counts):
+            total_fee += fee * count
 
     return total_fee
 
@@ -265,7 +274,7 @@ def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_p
 추천된 여행 코스를 기준으로 예상 여행 비용은 총 {user_budget}원이에요.
 너는 최고의 여행 가이드이자 여행 예산 평가 도우미야.
 이 금액이 해당 지역(예: 서울시가 아닌 {end_city} 같은 행정구 기준)의 평균 여행 비용과 비교해서
-비싸 보이는지, 적당한지, 저렴해 보이는지를 짧게 감성적으로 평가해줘. 그 해당 지역의 평균 여행 비용도 언급해줘.
+비싸 보이는지, 적당한지, 저렴해 보이는지를 짧게 감성적으로 평가해줘. 그 해당 지역의 평균 여행 비용도 숫자 금액으로 함께 언급해줘.
 
 - "~같아요", "~일 것 같아요", "~하면 좋겠어요"처럼 부드러운 말투로.
 - MZ세대 감성 이모지를 센스 있게 활용해줘.
@@ -275,7 +284,7 @@ def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_p
 """
     try:
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "너는 센스 있는 감성 여행 가이드야. 감성적인 코멘트를 친구에게 말하듯 써줘."},
                 {"role": "user", "content": prompt}
@@ -289,18 +298,22 @@ def ask_gpt_budget_comment(user_budget: int, end_city: str, days: int = 2, num_p
         return "예산 분석에 실패했어요. 다음에 다시 시도해 주세요."
 
 # 전체 예산 계산
-def calculate_total_budget_from_plan(db: Session, plan_data: BudgetRequest) -> Dict:
+async def calculate_total_budget_from_plan(db: Session, plan_data: BudgetRequest) -> Dict:
     num_people = plan_data.peopleCount
 
+    # 동기 함수 그대로 호출
     food_cost = calculate_food_cost(db, plan_data, num_people)
-    entry_fees = estimate_entry_fees(db, plan_data, num_people)
-    transport_cost = calculate_transport_cost(plan_data, num_people)
+    transport_cost = await calculate_transport_cost(plan_data, num_people)
     accommodation_cost = calculate_accommodation_cost(db, plan_data, num_people)
+
+    # 비동기 함수 호출
+    entry_fees = await estimate_entry_fees(db, plan_data, num_people)
 
     total_cost = food_cost + entry_fees + transport_cost + accommodation_cost
 
-    end_city = plan_data.endCity if hasattr(plan_data, "endCity") and plan_data.endCity else "여행지"
+    end_city = getattr(plan_data, "endCity", "여행지")
 
+    # 감성 코멘트는 여전히 동기로 처리
     budget_comment = ask_gpt_budget_comment(
         user_budget=total_cost,
         end_city=end_city,
