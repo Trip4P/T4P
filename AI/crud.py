@@ -70,7 +70,6 @@ def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: Opti
 
     db_schedule = models.Schedule(
         user_id=user_id,
-        start_city=schedule.startCity,
         end_city=schedule.endCity,
         start_date=schedule.startDate,
         end_date=schedule.endDate,
@@ -97,8 +96,6 @@ def update_schedule(db: Session, schedule_id: int, user_id: int, updates: dict):
         return None
 
     # 기본 필드 업데이트
-    if "startCity" in updates:
-        db_schedule.start_city = updates["startCity"]
     if "endCity" in updates:
         db_schedule.end_city = updates["endCity"]
     if "startDate" in updates:
@@ -138,7 +135,6 @@ def delete_schedule(db: Session, schedule_id: int, user_id: int):
 
 def convert_db_schedule_to_response(db_schedule: models.Schedule) -> schemas.ScheduleDBResponse:
     return schemas.ScheduleDBResponse(
-        startCity=db_schedule.start_city,
         endCity=db_schedule.end_city,
         startDate=db_schedule.start_date,
         endDate=db_schedule.end_date,

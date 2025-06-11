@@ -57,7 +57,6 @@ def recommend_schedule(
         # 3) AI 호출
         ai_response = get_ai_schedule(
             db=db,
-            start_city=schedule.startCity,
             end_city=schedule.endCity,
             start_date=schedule.startDate,
             end_date=schedule.endDate,
