@@ -13,7 +13,7 @@ def update_popular_places():
         FROM ai_schedule_places
         GROUP BY place_id
         ORDER BY count DESC
-        LIMIT 9
+        LIMIT 16
     """)).fetchall()
 
     popular = []

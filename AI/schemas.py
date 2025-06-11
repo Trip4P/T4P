@@ -18,7 +18,6 @@ class UserResponse(BaseModel):
 
 # 스케줄 요청용 기본 스키마
 class ScheduleBase(BaseModel):
-    startCity: str
     endCity: str
     startDate: str
     endDate: str
@@ -31,7 +30,6 @@ class ScheduleBase(BaseModel):
 
 # 스케줄 생성 요청
 class ScheduleCreate(BaseModel):
-    startCity: str
     endCity: str
     startDate: str
     endDate: str
@@ -73,7 +71,6 @@ class ScheduleResponse(BaseModel):
 
 # DB에서 스케줄 조회 응답
 class ScheduleDBResponse(BaseModel):
-    startCity: str
     endCity: str
     startDate: str
     endDate: str
@@ -93,7 +90,6 @@ class ScheduleDBResponse(BaseModel):
 
 # 스케줄 수정 요청
 class ScheduleUpdate(BaseModel):
-    startCity: Optional[str]
     endCity: Optional[str]
     startDate: Optional[str]
     endDate: Optional[str]

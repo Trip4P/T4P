@@ -20,7 +20,6 @@ class Schedule(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    start_city = Column(String)
     end_city = Column(String)
     start_date = Column(String)
     end_date = Column(String)
@@ -130,7 +129,6 @@ class QuickBudget(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # 사용자가 입력한 여행 정보
-    start_city = Column(String)
     end_city = Column(String)
     start_date = Column(Date)
     end_date = Column(Date)
