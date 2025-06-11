@@ -3,3 +3,38 @@
 node_modules
 **/__pycache__/
 *.py[cod]
+
+
+#기본 모드 모듈
+node_modules/
+
+#윈도우 실행파일 
+*.exe
+
+#crednetion 커밋제외
+secret.txt
+.env
+
+#DB파일 커밋 제외
+*.db
+*.sqlite
+*.sqlite3
+
+#이미지파일 커밋 제외
+*.jpg
+*.webp
+*.gif
+*.png
+
+# 가상환경 폴더 무시
+venv/
+
+#다운로드 받는 이미지 파일 제외
+chroma_db/
+DATA/
+PDF/
+
+#파이썬 컴파일 파일 제외
+*.pyc
+
+tripPlan/

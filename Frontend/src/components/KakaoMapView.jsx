@@ -1,12 +1,11 @@
-// KakaoMap.jsx
 import React, { useEffect, useRef } from "react";
 
-const KakaoMapView  = ({ places }) => {
-  const mapRef = useRef(null); //useRef로 div 참조
+const KakaoMapView = ({ places }) => {
+  const mapRef = useRef(null);
   const kakaoApiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
 
   useEffect(() => {
-    if (!mapRef.current) return; 
+    if (!mapRef.current) return;
 
     const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoApiKey}&autoload=false&libraries=clusterer`;
@@ -14,24 +13,23 @@ const KakaoMapView  = ({ places }) => {
 
     script.onload = () => {
       if (!window.kakao || !mapRef.current) return;
+
       window.kakao.maps.load(() => {
         const map = new window.kakao.maps.Map(mapRef.current, {
           center: new window.kakao.maps.LatLng(37.5665, 126.9780),
           level: 3,
         });
 
-       const linePath = [];
-
-       const markers = [];
-
-       let polyline = null;
+        const linePath = [];
+        const markers = [];
+        let polyline = null;
 
         places.forEach((place) => {
           const latlng = new window.kakao.maps.LatLng(place.lat, place.lng);
           linePath.push(latlng);
 
           const marker = new window.kakao.maps.Marker({
-            // map,
+            map: map,
             position: latlng,
             title: place.name,
           });
@@ -39,25 +37,26 @@ const KakaoMapView  = ({ places }) => {
           markers.push(marker);
 
           const infowindow = new window.kakao.maps.InfoWindow({
-            content: 
-            `<div style = "
-            padding:0; 
-            font-size:13px;
-            margin:0;
-            color:ffff;
-            white-space:nowrap;
-            display:inline-block;
-            disableAutoPan:true;
-            background:transparent;
-            ">
-            <span style="
-            display:inline-block;
-            padding:0;
-            margin:0;
-            line-height:1;
-            ">
-            ${place.name}</span>
-            <div>`,
+            content: `
+              <div style="
+                padding: 0;
+                font-size: 13px;
+                margin: 0;
+                color: #000;
+                white-space: nowrap;
+                display: inline-block;
+                background: transparent;
+              ">
+                <span style="
+                  display: inline-block;
+                  padding: 0;
+                  margin: 0;
+                  line-height: 1;
+                ">
+                  ${place.name}
+                </span>
+              </div>
+            `,
           });
 
           window.kakao.maps.event.addListener(marker, "mouseover", () => {
@@ -66,37 +65,41 @@ const KakaoMapView  = ({ places }) => {
 
           window.kakao.maps.event.addListener(marker, "mouseout", () => {
             infowindow.close();
-          });       
+          });
         });
 
-        const clusterer = new window.kakao.maps.MarkerClusterer({
-          map:map,
-          markers:markers,
-          averageCenter: true,
-          minLevel:5
-        })
+        if (places.length > 1) {
+          new window.kakao.maps.MarkerClusterer({
+            map: map,
+            markers: markers,
+            averageCenter: true,
+            minLevel: 10,
+          });
+        }
 
-        window.kakao.maps.event.addListener(map, "zoom_changed", function() {
-          const currentLevel = map.getLevel();
+        if (linePath.length > 1) {
+          polyline = new window.kakao.maps.Polyline({
+            path: linePath,
+            strokeWeight: 5,
+            strokeColor: "#0f62fe",
+            strokeOpacity: 0.8,
+            strokeStyle: "solid",
+          });
 
-          if (currentLevel > 5){
-            polyline.setMap(null);
-          } else {
-            polyline.setMap(map);
-          }
-        });
+          polyline.setMap(map);
 
-        polyline = new window.kakao.maps.Polyline({
-          map,
-          path: linePath,
-          strokeWeight: 5,
-          strokeColor: "#0f62fe",
-          strokeOpacity: 0.8,
-          strokeStyle: "solid",
-        });
+          window.kakao.maps.event.addListener(map, "zoom_changed", () => {
+            const currentLevel = map.getLevel();
+            polyline.setMap(currentLevel > 10 ? null : map);
+          });
+        }
 
         if (linePath.length > 0) {
           map.setCenter(linePath[0]);
+
+          if (linePath.length === 1) {
+            map.setLevel(3);
+          }
         }
       });
     };
@@ -104,9 +107,11 @@ const KakaoMapView  = ({ places }) => {
     document.head.appendChild(script);
   }, [places, kakaoApiKey]);
 
+  console.log(places);
+
   return (
     <div
-      ref={mapRef} //여기 연결
+      ref={mapRef}
       style={{ width: "100%", height: "400px", border: "1px solid #ddd" }}
     ></div>
   );

@@ -20,6 +20,7 @@ export default function TravelPlan() {
   const [isLoading, setIsLoading] = useState(false);
   const [travelStyle, setTravelStyle] = useState(null);
 
+
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
@@ -155,6 +156,9 @@ export default function TravelPlan() {
                         emotions: travelStyle?.emotions,
                         companions: travelStyle?.companions,
                         peopleCount: travelStyle?.peopleCount,
+                        latitude: item.latitude,
+                        longitude: item.longitude,
+                        placeName: item.place
                        },
                     })
                   }

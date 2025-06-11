@@ -26,6 +26,7 @@ export default function PlaceDetail() {
             peopleCount: peopleCount,
           }
         );
+        //console.log("백엔드 응답값 확인:", response.data);
         setPlaceData(response.data);
       } catch (error) {
         console.error("Failed to fetch place detail:", error);
@@ -42,7 +43,6 @@ export default function PlaceDetail() {
       </>
     );
   }
-
   return (
     <>
       <Header />
@@ -165,24 +165,22 @@ export default function PlaceDetail() {
           </div>
 
           {/* 위치 정보 */}
-          <div className="bg-gray-100 rounded-lg p-4">
-            <h2 className="text-blue-700 font-semibold mb-2">위치 정보</h2>
-            <div className="flex gap-4">
-              <KakaoMapView
-                places={
-                  placeData.latitude && placeData.longitude
-                    ? [
-                        {
-                          lat: parseFloat(placeData.latitude),
-                          lng: parseFloat(placeData.longitude),
-                          name: placeData.place,
-                        },
-                      ]
-                    : []
-                }
-              />
+          {placeData.location?.lat && placeData.location?.lon && (
+            <div className="bg-gray-100 rounded-lg p-4">
+              <h2 className="text-blue-700 font-semibold mb-2">위치 정보</h2>
+              <div className="flex gap-4">
+                <KakaoMapView
+                  places={[
+                    {
+                      lat: Number(placeData.location.lat),
+                      lng: Number(placeData.location.lon), //오타 수정
+                      name: placeData.place,
+                    },
+                  ]}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
       <Footer />
