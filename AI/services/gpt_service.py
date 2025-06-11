@@ -26,14 +26,14 @@ def get_db():
 
 # 감정 → 추천 스타일 매핑
 EMOTION_TO_STYLE = {
-    "기쁜": ["activity", "hotplace", "photo", "shopping"],
-    "설레는": ["date", "culture", "exotic", "landmark", "photo"],
-    "평범한": ["nature", "healing", "quiet", "traditional"],
-    "놀란": ["exotic", "landmark", "activity", "hotplace"],
-    "불쾌한": ["healing", "quiet", "nature", "view"],
-    "두려운": ["culture", "traditional", "team"],
-    "슬픈": ["healing", "nature", "family", "culture", "quiet"],
-    "화나는": ["activity", "shopping", "team", "photo"],
+    "기쁜": ["activity", "hotplace", "photo", "shopping", "team", "date", "view"], 
+    "설레는": ["date", "culture", "exotic", "landmark", "photo", "modern", "view", "anniversary"],
+    "평범한": ["nature", "healing", "quiet", "traditional", "family", "view", "meeting"],
+    "놀란": ["exotic", "landmark", "activity", "hotplace", "photo", "modern", "shopping"],
+    "불쾌한": ["healing", "quiet", "nature", "view", "traditional", "culture"],
+    "두려운": ["culture", "traditional", "team", "family", "quiet", "view", "business", "meeting"],
+    "슬픈": ["healing", "nature", "family", "culture", "quiet", "view", "traditional"],
+    "화나는": ["activity", "shopping", "team", "photo", "hotplace", "modern"]
 }
 
 def get_styles_by_emotions(emotions: List[str]) -> List[str]:
