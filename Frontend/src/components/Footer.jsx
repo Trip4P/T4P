@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-100 text-sm text-gray-600 px-6 py-8">
+    <footer className="bg-white text-sm text-gray-600 px-6 py-8">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
         <div>
           <div className="text-lg font-bold text-blue-600 mb-2">거기 어때 AI</div>

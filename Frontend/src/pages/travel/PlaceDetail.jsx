@@ -140,18 +140,6 @@ export default function PlaceDetail() {
                 <p>{placeData.reviewHighlights?.review}</p>
               </div>
             </div>
-            <div className="mt-2">
-              <p className="text-sm mb-1">
-                만족도{" "}
-                <span className="font-semibold">{placeData.satisfaction}%</span>
-              </p>
-              <div className="w-full h-2 bg-gray-200 rounded-full">
-                <div
-                  className="h-full bg-blue-500 rounded-full"
-                  style={{ width: `${placeData.satisfaction}%` }}
-                />
-              </div>
-            </div>
             <div className="mt-3 flex gap-2 flex-wrap text-sm">
               {placeData.reviewKeywords?.map((keyword, idx) => (
                 <span
@@ -170,12 +158,12 @@ export default function PlaceDetail() {
             <div className="flex gap-4">
               <KakaoMapView
                 places={
-                  placeData.latitude && placeData.longitude
+                  placeData.location.lat && placeData.location.lon
                     ? [
                         {
-                          lat: parseFloat(placeData.latitude),
-                          lng: parseFloat(placeData.longitude),
                           name: placeData.place,
+                          lat: parseFloat(placeData.location.lat),
+                          lng: parseFloat(placeData.location.lon),
                         },
                       ]
                     : []

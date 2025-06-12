@@ -4,13 +4,13 @@ import TravelStyleForm from './pages/travel/TravelStyleForm.jsx';
 import TravelPlan from './pages/travel/TravelPlan.jsx';
 import PlaceDetail from './pages/travel/PlaceDetail.jsx';
 import Budget from './pages/travel/Budget.jsx';
-import BudgetInput from './pages/BudgetInput.jsx';
+import BudgetInput from './pages/budget/BudgetInput.jsx';
 import RestaurantInput from './pages/restaurant/RestaurantInput.jsx'
 import RestaurantRecommend from './pages/restaurant/RestaurantRecommend.jsx'
 import RestaurantDetail from './pages/restaurant/RestaurantDetail.jsx'
-import Signup from './pages/Signup.jsx';
-import Login from './pages/Login.jsx';
-import MyPlan from './pages/MyPlan.jsx';
+import Signup from './pages/archive/Signup.jsx';
+import Login from './pages/archive/Login.jsx';
+import MyPlan from './pages/archive/MyPlan.jsx';
 
 export default function AppRouter() {
   return (

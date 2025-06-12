@@ -3,20 +3,23 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import LoadingSpinner from "../../components/LoadingSpinner";
-import ProgressBar from "../../components/ProgressBar";
-import GoogleMapView from "../../components/GoogleMapView";
+import LottieAnimation from "../../components/LottieAnimation";
 
 export default function RestaurantRecommendationPage() {
   const navigate = useNavigate();
   const [places, setPlaces] = useState([]);
   const [aiComment, setAiComment] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
 
   const tasteProfile = JSON.parse(localStorage.getItem("tasteProfile")); // 로컬스토리지에 저장된 맛집 성향 가져오기
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  useEffect(() => {
+  const handleRetry = () => {
+    // Clear saved localStorage data before retrying
+    localStorage.removeItem("savedAiComment");
+    localStorage.removeItem("savedPlaces");
+    setHasLoadedFromStorage(false);
     if (tasteProfile) {
       setIsLoading(true);
       axios
@@ -30,6 +33,9 @@ export default function RestaurantRecommendationPage() {
         .then((res) => {
           setAiComment(res.data.aiComment);
           setPlaces(res.data.places);
+          // Save to localStorage
+          localStorage.setItem("savedAiComment", res.data.aiComment);
+          localStorage.setItem("savedPlaces", JSON.stringify(res.data.places));
           setIsLoading(false);
         })
         .catch((err) => {
@@ -37,14 +43,25 @@ export default function RestaurantRecommendationPage() {
           setIsLoading(false);
         });
     }
+  };
+
+  useEffect(() => {
+    const savedPlaces = localStorage.getItem("savedPlaces");
+    const savedComment = localStorage.getItem("savedAiComment");
+    if (savedPlaces && savedComment) {
+      setPlaces(JSON.parse(savedPlaces));
+      setAiComment(savedComment);
+      setHasLoadedFromStorage(true);
+    } else {
+      handleRetry();
+    }
   }, []);
 
-  if (isLoading)
+  if (isLoading && !hasLoadedFromStorage)
     return (
       <>
         <Header />
-        {/* <LoadingSpinner /> */}
-        <ProgressBar />
+        <LottieAnimation />
       </>
     );
 
@@ -97,7 +114,6 @@ export default function RestaurantRecommendationPage() {
                         state: {
                           placeId: place.placeId,
                           companions: tasteProfile?.companions,
-                          foodPreferences: tasteProfile?.foodPreference,
                           atmospheres: tasteProfile?.atmospheres,
                         },
                       })
@@ -112,13 +128,13 @@ export default function RestaurantRecommendationPage() {
           </div>
         ))}
 
-        {/* 지도 영역 */}
-        {/* <GoogleMapView places={places} /> */}
-
         {/* Bottom Buttons */}
         <div className="flex flex-wrap gap-2 mt-10">
-          <button className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg">
-            🔄 다시 추천받기
+          <button
+            onClick={handleRetry}
+            className="flex items-center gap-2 bg-blue-700 text-white px-4 py-2 rounded-lg"
+          >
+            다시 추천받기
           </button>
           <button
             onClick={() => navigate("/RestaurantInput")}
@@ -126,7 +142,6 @@ export default function RestaurantRecommendationPage() {
           >
             성향 입력 다시하기
           </button>
-          {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
       <Footer />
