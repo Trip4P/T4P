@@ -6,9 +6,9 @@ import Footer from "../../components/Footer";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import KakaoMapView from "../../components/KakaoMapView";
 
-export default function RestaurantDetailPage() {
+export default function RestaurantDetail() {
   const location = useLocation();
-  const { placeId, companions, foodPreferences, atmospheres } =
+  const { placeId, companions, atmospheres } =
     location.state || {};
   const [placeData, setPlaceData] = useState(null);
 
@@ -140,15 +140,6 @@ export default function RestaurantDetailPage() {
                 <p>{placeData.reviewHighlights.review}</p>
               </div>
             </div>
-            {/* <div className="mt-2">
-              <p className="text-sm mb-1">
-                만족도{" "}
-                <span className="font-semibold">{placeData.satisfaction}%</span>
-              </p>
-              <div className="w-full h-2 bg-gray-200 rounded-full">
-                <div className="w-[87%] h-full bg-blue-500 rounded-full" />
-              </div>
-            </div> */}
             <div className="mt-3 flex gap-2 flex-wrap text-sm">
               {placeData.reviewKeywords.map((tag, i) => (
                 <span
@@ -166,12 +157,12 @@ export default function RestaurantDetailPage() {
             <h2 className="text-blue-700 font-semibold mb-2">위치 정보</h2>
             <KakaoMapView
               places={
-                placeData.latitude && placeData.longitude
+                placeData.location.lat && placeData.location.lon
                   ? [
                       {
-                        lat: parseFloat(placeData.latitude),
-                        lng: parseFloat(placeData.longitude),
                         name: placeData.place,
+                        lat: parseFloat(placeData.location.lat),
+                        lng: parseFloat(placeData.location.lon),
                       },
                     ]
                   : []
