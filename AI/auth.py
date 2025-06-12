@@ -41,17 +41,17 @@ async def get_current_user_optional(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db)
 ):
-    if authorization is None:
+    if not authorization:
         return None
     try:
         scheme, token = authorization.split()
         if scheme.lower() != "bearer":
             return None
-        payload = jwt.decode(token, config.settings.SECRET_KEY, algorithms=[config.settigns.ALGORITHM])
+        payload = jwt.decode(token, config.settings.SECRET_KEY, algorithms=[config.settings.ALGORITHM])
         username: str = payload.get("sub")
-        if username is None:
+        if not username:
             return None
-    except Exception:
+    except Exception as e:
+        print("⚠️ JWT decode 실패:", e)
         return None
-    user = db.query(models.User).filter(models.User.username == username).first()
-    return user
+    return db.query(models.User).filter(models.User.username == username).first()
