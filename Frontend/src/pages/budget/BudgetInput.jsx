@@ -11,10 +11,10 @@ import {
   Legend,
 } from "chart.js";
 import DatePicker from "react-datepicker";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import Chart from "../components/Chart";
-import LoadingSpinner from "../components/LoadingSpinner";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import Chart from "../../components/Chart";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 ChartJS.register(
   ArcElement,
@@ -206,8 +206,8 @@ export default function TravelBudgetInputPage() {
           <div className="bg-white mt-10 p-8 rounded-xl shadow-lg border border-gray-200">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-44 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
-                  🗣️ AI 코멘트
+                <div className="w-20 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
+                  🗣️
                 </div>
                 <p className="text-lg font-medium text-gray-800">{aiComment}</p>
               </div>

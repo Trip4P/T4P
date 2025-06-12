@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import KakaoMapView from "../components/KakaoMapView";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import KakaoMapView from "../../components/KakaoMapView";
 
 export default function MyPlan() {
   const [savedPlan, setSavedPlan] = useState(null);

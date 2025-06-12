@@ -1,8 +1,8 @@
 import axios from "axios";
 import { useState } from "react";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
-import LoadingSpinner from "../components/LoadingSpinner";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 export default function Login() {
   const [form, setForm] = useState({
