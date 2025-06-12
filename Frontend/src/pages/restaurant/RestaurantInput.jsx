@@ -94,7 +94,7 @@ export default function TasteProfilePage() {
               value={city}
               onChange={(e) => setCity(e.target.value)}
               placeholder="ex) 서울"
-              className="w-full border border-gray-300 rounded px-4 py-2"
+              className="w-full border border-blue-300 rounded px-4 py-2"
             />
           </div>
 
@@ -104,8 +104,8 @@ export default function TasteProfilePage() {
               type="text"
               value={region}
               onChange={(e) => setRegion(e.target.value)}
-              placeholder="ex) 잠실"
-              className="w-full border border-gray-300 rounded px-4 py-2"
+              placeholder="ex) 송파구"
+              className="w-full border border-blue-300 rounded px-4 py-2"
             />
           </div>
 
