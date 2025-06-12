@@ -60,8 +60,8 @@ export default function TravelStyleForm() {
             type="text"
             value={endCity}
             onChange={(e) => setEndCity(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2"
-            placeholder="ex) 잠실"
+            className="w-full border border-blue-300 rounded px-4 py-2"
+            placeholder="ex) 송파구"
           />
         </div>
 
@@ -78,7 +78,7 @@ export default function TravelStyleForm() {
                 endDate={endDate}
                 placeholderText="시작일 선택"
                 dateFormat="yyyy-MM-dd"
-                className="border border-gray-300 rounded px-4 py-2"
+                className="border border-blue-300 rounded px-4 py-2"
               />
             </div>
 
@@ -92,7 +92,7 @@ export default function TravelStyleForm() {
                 endDate={endDate}
                 placeholderText="종료일 선택"
                 dateFormat="yyyy-MM-dd"
-                className="border border-gray-300 rounded px-4 py-2"
+                className="border border-blue-300 rounded px-4 py-2"
               />
             </div>
           </div>
@@ -161,6 +161,7 @@ export default function TravelStyleForm() {
           <button
             onClick={() => {
               const travelStyleDate = {
+                startCity,
                 endCity,
                 startDate: startDate ? formatDateKorean(startDate) : null,
                 endDate: endDate ? formatDateKorean(endDate) : null,
@@ -170,6 +171,7 @@ export default function TravelStyleForm() {
               };
               // 로컬 스토리지 저장
               localStorage.setItem("travelStyle", JSON.stringify(travelStyleDate));
+              localStorage.removeItem("travelPlan");
               navigate("/TravelPlan");
             }}
             className="bg-blue-600 text-white rounded px-6 py-3 hover:bg-blue-800 transition"
