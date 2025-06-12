@@ -207,7 +207,7 @@ export default function TravelBudgetInputPage() {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-20 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
-                  🗣️
+                  <img src="/businessman.png" alt="ai 아이콘" className="w-7 h-auto" />
                 </div>
                 <p className="text-lg font-medium text-gray-800">{aiComment}</p>
               </div>
