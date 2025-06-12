@@ -3,10 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import LoadingSpinner from "../../components/LoadingSpinner";
-import ProgressBar from "../../components/ProgressBar";
-//import GoogleMapView from "../components/GoogleMapView";
-import PlaceDetail from "./PlaceDetail";
+import LottieAnimation from "../../components/LottieAnimation";
 import KakaoMapView from "../../components/KakaoMapView";
 
 export default function TravelPlan() {
@@ -26,6 +23,7 @@ export default function TravelPlan() {
     async function fetchData() {
       setIsLoading(true);
       try {
+        const cached = localStorage.getItem("travelPlan");
         const stored = JSON.parse(localStorage.getItem("travelStyle"));
 
         if (!stored) {
@@ -35,6 +33,15 @@ export default function TravelPlan() {
         }
 
         setTravelStyle(stored);
+
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setPlans(parsed.plans);
+          setStartDate(stored.startDate);
+          setEndDate(stored.endDate);
+          setIsLoading(false);
+          return;
+        }
 
         const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
           startCity: stored.startCity,
@@ -51,7 +58,6 @@ export default function TravelPlan() {
         setTags(res.data.tags || []);
         setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
 
-        // 방어 코드
         if (Array.isArray(res.data.plans)) {
           setPlans(res.data.plans);
           localStorage.setItem("travelPlan", JSON.stringify({
@@ -63,11 +69,10 @@ export default function TravelPlan() {
           console.warn("plans가 배열이 아닙니다:", res.data.plans);
           setPlans([]);
         }
+
         setIsLoading(false);
       } catch (err) {
         console.error("에러 발생", err);
-        setIsLoading(false);
-      } finally {
         setIsLoading(false);
       }
     }
@@ -79,8 +84,7 @@ export default function TravelPlan() {
     return (
       <>
         <Header />
-        {/* <LoadingSpinner /> */}
-        <ProgressBar />
+        <LottieAnimation />
       </>
     );
 
@@ -88,7 +92,6 @@ export default function TravelPlan() {
     <>
       <Header />
       <div className="max-w-5xl mx-auto p-6 bg-blue-50 min-h-screen text-blue-900">
-        {/* 헤더 밑 윗줄 */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">여행 일정</h1>
           <p className="text-sm text-blue-600">
@@ -107,8 +110,10 @@ export default function TravelPlan() {
         </div>
 
         {/* AI 코멘트 */}
-        <div className="flex items-start bg-blue-100 p-4 rounded-lg mb-6">
-          <div className="mr-3 text-2xl">AI 코멘트</div>
+        <div className="flex items-start bg-blue-100 p-2 rounded-sm mb-6">
+          <div className="mr-3 text-2xl">
+            <img src="/businessman.png" alt="ai 아이콘" className="w-5 h-auto" />
+          </div>
           <p className="text-sm">
             {aiEmpathy || "로딩 중"}
           </p>
@@ -139,9 +144,6 @@ export default function TravelPlan() {
             <div key={idx} className="bg-white p-4 rounded-lg shadow">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-blue-700 font-semibold">{item.time}</span>
-                {/* <span className="bg-blue-100 text-blue-700 px-2 py-0.5 text-xs rounded">
-                  {item.placeType}
-                </span> */}
               </div>
               <h3 className="text-lg font-bold">{item.place}</h3>
               <p className="text-sm text-blue-700">{item.aiComment}</p>
@@ -155,7 +157,7 @@ export default function TravelPlan() {
                         emotions: travelStyle?.emotions,
                         companions: travelStyle?.companions,
                         peopleCount: travelStyle?.peopleCount,
-                       },
+                      },
                     })
                   }
                 >
@@ -206,7 +208,6 @@ export default function TravelPlan() {
           >
             여행 예산 확인하기
           </button>
-          {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
       <Footer />
