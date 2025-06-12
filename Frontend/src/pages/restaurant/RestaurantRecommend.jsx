@@ -119,7 +119,7 @@ export default function RestaurantRecommendationPage() {
                         state: {
                           placeId: place.placeId,
                           companions: tasteProfile?.companions,
-                          foodPreferences: tasteProfile?.foodPreference,
+                          // foodPreferences: tasteProfile?.foodPreference,
                           atmospheres: tasteProfile?.atmospheres,
                         },
                       })
