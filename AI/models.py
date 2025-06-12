@@ -27,6 +27,8 @@ class Schedule(Base):
     companions = Column(String)     
     schedule_json = Column(Text)
     people_count = Column(Integer, default=1)
+    tags = Column(Text, nullable=True)
+    ai_empathy = Column(Text, nullable=True)
 
     owner = relationship("User", back_populates="schedules")
 

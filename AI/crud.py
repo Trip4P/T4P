@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 import models, schemas
-import json
+import json, ast
 from passlib.context import CryptContext
 from typing import Optional
+from schemas import ScheduleDBResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -29,7 +30,6 @@ def get_user_by_id(db: Session, user_id: int):
 def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: Optional[int] = None):
     schedule_json = schedule.schedule_json
 
-    # schedule_json이 None이거나 plans가 없으면 기본값 넣기
     if not schedule_json:
         schedule_json = {
             "plans": {
@@ -39,7 +39,6 @@ def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: Opti
             }
         }
     else:
-        # dict인 경우 plans 키 유무 체크
         if isinstance(schedule_json, dict):
             if "plans" not in schedule_json or not schedule_json["plans"]:
                 schedule_json["plans"] = {
@@ -76,8 +75,8 @@ def create_schedule(db: Session, schedule: schemas.ScheduleCreate, user_id: Opti
         emotions=json.dumps(schedule.emotions, ensure_ascii=False) if schedule.emotions else None,
         companions=json.dumps(schedule.companions, ensure_ascii=False) if schedule.companions else None,
         schedule_json=schedule_json_str,
-        people_count=schedule.peopleCount
-        # tags, aiEmpathy, plans 는 DB 저장 대상 아님
+        people_count=schedule.peopleCount,
+        ai_empathy=schedule.aiEmpathy
     )
     db.add(db_schedule)
     db.commit()
@@ -95,7 +94,6 @@ def update_schedule(db: Session, schedule_id: int, user_id: int, updates: dict):
     if not db_schedule:
         return None
 
-    # 기본 필드 업데이트
     if "endCity" in updates:
         db_schedule.end_city = updates["endCity"]
     if "startDate" in updates:
@@ -109,21 +107,21 @@ def update_schedule(db: Session, schedule_id: int, user_id: int, updates: dict):
     if "companions" in updates:
         db_schedule.companions = json.dumps(updates["companions"], ensure_ascii=False) if updates["companions"] else None
 
-    # schedule_json 업데이트 처리 (dict이면 JSON 문자열로 변환)
+    if "aiEmpathy" in updates:
+        db_schedule.ai_empathy = updates["aiEmpathy"]
+
+    if "tags" in updates:
+        db_schedule.tags = json.dumps(updates["tags"], ensure_ascii=False)
+
     if "schedule_json" in updates:
-        # schedule_json 내부가 dict일 수도 있고, string일 수도 있으니 검사
         if isinstance(updates["schedule_json"], dict):
-            # 기존 schedule_json이 문자열인 경우 덮어쓰기
             db_schedule.schedule_json = json.dumps(updates["schedule_json"], ensure_ascii=False)
         else:
             db_schedule.schedule_json = updates["schedule_json"]
 
-    # AI empathy, tags, plans 등은 DB 저장 대상 아님(필요하면 따로 컬럼 추가 필요)
-
     db.commit()
     db.refresh(db_schedule)
     return db_schedule
-
 
 def delete_schedule(db: Session, schedule_id: int, user_id: int):
     db_schedule = get_schedule(db, schedule_id, user_id)
@@ -133,17 +131,33 @@ def delete_schedule(db: Session, schedule_id: int, user_id: int):
     db.commit()
     return True
 
-def convert_db_schedule_to_response(db_schedule: models.Schedule) -> schemas.ScheduleDBResponse:
-    return schemas.ScheduleDBResponse(
+# 안전한 문자열 리스트 파싱 함수
+def parse_list_field(value):
+    if isinstance(value, str):
+        try:
+            return ast.literal_eval(value)
+        except Exception:
+            return []
+    return value or []
+
+# 응답 변환 함수
+def convert_db_schedule_to_response(db_schedule):
+    schedule_json = db_schedule.schedule_json
+    if isinstance(schedule_json, str):
+        try:
+            schedule_json = json.loads(schedule_json)
+        except json.JSONDecodeError:
+            schedule_json = {}
+
+    return ScheduleDBResponse(
         endCity=db_schedule.end_city,
         startDate=db_schedule.start_date,
         endDate=db_schedule.end_date,
-        userEmotion=json.loads(db_schedule.emotions) if db_schedule.emotions else [],
-        with_=json.loads(db_schedule.companions) if db_schedule.companions else [],
-        schedule_json=json.loads(db_schedule.schedule_json) if db_schedule.schedule_json else None,
-        aiEmpathy=None,  # DB에서 안 가져옴
-        tags=[],         # DB에서 안 가져옴
-        plans=[]         # DB에서 안 가져옴
+        userEmotion=parse_list_field(db_schedule.emotions),
+        companions=parse_list_field(db_schedule.companions),
+        aiEmpathy=getattr(db_schedule, "ai_empathy", None),
+        tags=parse_list_field(getattr(db_schedule, "tags", [])),
+        plans=schedule_json.get("plans", {})
     )
 
 def create_budget(db: Session, schedule_id: int, food_cost: int, entry_fees: int, transport_cost: int):

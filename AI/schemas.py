@@ -75,18 +75,13 @@ class ScheduleDBResponse(BaseModel):
     startDate: str
     endDate: str
     userEmotion: List[str]
-    with_: List[str] = Field(..., alias="companions")
-    food_types: List[str]
-    region: Optional[str] = None
-    aiEmpathy: Optional[str] = None
-    tags: Optional[List[str]] = []
-    plans: Optional[Dict[str, Any]] = {}
-    schedule_json: Optional[Dict[str, Any]]
+    companions: List[str]
+    aiEmpathy: Optional[float]
+    tags: List[str]
+    plans: Dict[str, Any]
 
     class Config:
         orm_mode = True
-        allow_population_by_field_name = True
-        allow_population_by_alias = True
 
 # 스케줄 수정 요청
 class ScheduleUpdate(BaseModel):
@@ -107,6 +102,23 @@ class RestaurantPlace(BaseModel):
     tags: List[str]
     placeId: int
     imageUrl: str  # 이미지 URL 추가
+
+class MyPageResponse(BaseModel):
+    username: str
+    email: EmailStr
+    
+    class Config:
+        orm_mode = True
+
+class MySimplePlan(BaseModel):
+    id: int
+    endCity: str = Field(..., alias="end_city")
+    startDate: str = Field(..., alias="start_date")
+    endDate: str = Field(..., alias="end_date")
+
+    class Config:
+        orm_mode = True
+        allow_population_by_alias = True
 
 # 로그인 토큰 응답
 class Token(BaseModel):

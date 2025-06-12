@@ -259,7 +259,7 @@ def save_ai_schedule_places(plans: List[dict], db: Session):
                 VALUES (:sid, :pid, :ptype)
             """), {"sid": sched_id, "pid": pid, "ptype": ptype})
     db.commit()
-
+    
 def get_ai_schedule(db: Session, end_city: str, start_date: str, end_date: str,
                     emotions: List[str], companions: List[str], peopleCount: int) -> ScheduleAIResponse:
     places = fetch_places_from_db(db, end_city)

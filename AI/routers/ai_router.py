@@ -110,11 +110,13 @@ def recommend_schedule(
             day_key = f"day{day['day']}"
             plans_to_save[day_key] = day
 
-        # 6) schedule_json에서 aiEmpathy, tags 제외하고 plans만 업데이트
+        # 6) GPT 응답에서 받은 aiEmpathy와 tags도 저장하도록 추가
         update_data = {
             "schedule_json": {
                 "plans": plans_to_save
-            }
+            },
+            "aiEmpathy": ai_response_data.get("aiEmpathy", ""),
+            "tags": ai_response_data.get("tags", [])
         }
 
         updated_schedule = crud.update_schedule(db, new_schedule.id, user_id, update_data)
