@@ -3,10 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import LoadingSpinner from "../../components/LoadingSpinner";
-import ProgressBar from "../../components/ProgressBar";
 import LottieAnimation from "../../components/LottieAnimation";
-import GoogleMapView from "../../components/GoogleMapView";
 
 export default function RestaurantRecommendationPage() {
   const navigate = useNavigate();
@@ -64,8 +61,6 @@ export default function RestaurantRecommendationPage() {
     return (
       <>
         <Header />
-        {/* <LoadingSpinner /> */}
-        {/* <ProgressBar /> */}
         <LottieAnimation />
       </>
     );
@@ -119,7 +114,6 @@ export default function RestaurantRecommendationPage() {
                         state: {
                           placeId: place.placeId,
                           companions: tasteProfile?.companions,
-                          // foodPreferences: tasteProfile?.foodPreference,
                           atmospheres: tasteProfile?.atmospheres,
                         },
                       })
@@ -133,9 +127,6 @@ export default function RestaurantRecommendationPage() {
             </div>
           </div>
         ))}
-
-        {/* 지도 영역 */}
-        {/* <GoogleMapView places={places} /> */}
 
         {/* Bottom Buttons */}
         <div className="flex flex-wrap gap-2 mt-10">
@@ -151,7 +142,6 @@ export default function RestaurantRecommendationPage() {
           >
             성향 입력 다시하기
           </button>
-          {/* <button className="bg-white text-blue-700 border border-blue-400 px-4 py-2 rounded-lg">친구와 공유하기 (시간 남으면 구현)</button> */}
         </div>
       </div>
       <Footer />
