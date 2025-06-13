@@ -35,7 +35,7 @@ app.include_router(mypage_router.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"], # CORS 설정
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
