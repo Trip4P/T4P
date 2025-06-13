@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import TravelPlan from "../src/pages/TravelPlan";
+import TravelPlan from "../src/pages/travel/TravelPlan";
 import "@testing-library/jest-dom";
 import axios from "axios";
 import { BrowserRouter } from "react-router-dom";
 
 jest.mock("axios");
-jest.mock("./src/components/GoogleMapView", () => {
-  return jest.fn(() => <div>Mock Google Map View</div>); // Render a simple div
+jest.mock("../src/components/KakaoMapView", () => {
+  return jest.fn(() => <div>Mock Kakao Map View</div>); // Render a simple div
 });
 
 

@@ -8,9 +8,10 @@ import BudgetInput from './pages/budget/BudgetInput.jsx';
 import RestaurantInput from './pages/restaurant/RestaurantInput.jsx'
 import RestaurantRecommend from './pages/restaurant/RestaurantRecommend.jsx'
 import RestaurantDetail from './pages/restaurant/RestaurantDetail.jsx'
-import Signup from './pages/archive/Signup.jsx';
-import Login from './pages/archive/Login.jsx';
+import Signup from './pages/mypage/Signup.jsx';
+import Login from './pages/mypage/Login.jsx';
 import MyPlan from './pages/archive/MyPlan.jsx';
+import Mypage from './pages/mypage/Mypage.jsx';
 
 export default function AppRouter() {
   return (
@@ -28,6 +29,7 @@ export default function AppRouter() {
         <Route path="/Signup" element={<Signup />} />
         <Route path="/Login" element={<Login />} />
         <Route path="/MyPlan" element={<MyPlan />} />
+        <Route path="/MyPage" element={<Mypage />} />
       </Routes>
     </Router>
   )

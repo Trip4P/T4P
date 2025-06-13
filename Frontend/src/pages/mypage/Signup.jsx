@@ -2,6 +2,7 @@ import { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import axios from "axios";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -35,9 +36,18 @@ export default function Signup() {
 
     setIsLoading(true);
     try {
-      // 여기에 실제 회원가입 API 요청 코드 삽입
-      console.log("회원가입 데이터:", form);
-      alert("회원가입 성공!");
+      const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/signup`, {
+        username: form.username,
+        email: form.email,
+        password: form.password,
+      });
+
+      if (res.data?.id) {
+        alert("회원가입이 완료되었습니다.");
+        window.location.href = "/Login";
+      } else {
+        setError("회원가입에 실패했습니다.");
+      }
     } catch (err) {
       console.error(err);
       setError("회원가입 중 오류가 발생했습니다.");
@@ -56,8 +66,8 @@ export default function Signup() {
             <label className="block mb-1">닉네임</label>
             <input
               type="text"
-              name="nickname"
-              value={form.nickname}
+              name="username"
+              value={form.username}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded"
               required

@@ -7,7 +7,6 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 export default function Login() {
   const [form, setForm] = useState({
     username: "",
-    email: "",
     password: "",
   });
 
@@ -25,18 +24,28 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    if (!form.username || !form.email || !form.password) {
-      setError("닉네임과 이메일과 비밀번호를 입력해주세요.");
+    if (!form.username || !form.password) {
+      setError("아이디와 비밀번호를 입력해주세요.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:8000/auth/login", form);
+      const qs = new URLSearchParams();
+      qs.append("username", form.username);
+      qs.append("password", form.password);
+
+      const response = await axios.post(`${VITE_API_BASE_URL}/auth/login`, qs, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
 
       console.log("로그인 성공:", response.data);
+      localStorage.setItem("accessToken", response.data.access_token);
       alert("로그인 성공!");
-      setForm({ username: "", email: "", password: "" });
+      setForm({ username: "", password: "" });
+      window.location.href = "/";
     } catch (err) {
       if (err.response) {
         if (err.response.status === 401) {
@@ -60,22 +69,11 @@ export default function Login() {
         <h2 className="text-2xl font-semibold mb-4">로그인</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">닉네임</label>
+            <label className="block mb-1">아이디</label>
             <input
               type="text"
               name="username"
               value={form.username}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-1">이메일</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
               onChange={handleChange}
               className="w-full px-3 py-2 border rounded"
               required
