@@ -4,5 +4,6 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "http://planning.gensapps.io/:splat"
   status = 200
+  force = true
