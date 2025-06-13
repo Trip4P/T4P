@@ -22,6 +22,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
         
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"], # CORS 설정
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(popular_router.router)
 app.include_router(auth_router.router)
 app.include_router(schedule_router.router)
@@ -33,13 +41,6 @@ app.include_router(mealdetail_router.router)
 app.include_router(desinationdetail_router.router)
 app.include_router(mypage_router.router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # CORS 설정
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.get("/")
 def root():
