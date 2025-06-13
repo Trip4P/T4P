@@ -2,60 +2,6 @@
   command = "npm install --legacy-peer-deps && npm run build"
   publish = "dist"
 
-[[redirects]]
-  from = "/popular-places"
-  to = "http://planning.gensapps.io/popular-places"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/ai/schedule"
-  to = "http://planning.gensapps.io/ai/schedule"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/ai/restaurant"
-  to = "http://planning.gensapps.io/ai/restaurant"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/budgets"
-  to = "http://planning.gensapps.io/api/budgets"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/schedules/budgets"
-  to = "http://planning.gensapps.io/api/schedules/budgets"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/food-places-detail"
-  to = "http://planning.gensapps.io/api/food-places-detail"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/places-detail"
-  to = "http://planning.gensapps.io/api/places-detail"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/auth/signup"
-  to = "http://planning.gensapps.io/auth/signup"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/auth/login"
-  to = "http://planning.gensapps.io/auth/login"
-  status = 200
-  force = true
-
 # Fallback for SPA
 [[redirects]]
   from = "/*"
