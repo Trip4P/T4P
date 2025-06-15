@@ -80,7 +80,7 @@ export default function TravelPlan() {
                 peopleCount: stored.peopleCount,
                 aiEmpathy: res.data.aiEmpathy || "",
                 tags: res.data.tags || [],
-                plans: res.data.plans,  // assuming Day 1 for simplicity
+                plans: Array.isArray(res.data.plans) ? res.data.plans[0] : {},
                 schedule_json: {},
               }, {
                 headers: {
