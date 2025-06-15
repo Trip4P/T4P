@@ -17,7 +17,7 @@ export default function TravelPlan() {
   const [isLoading, setIsLoading] = useState(false);
   const [travelStyle, setTravelStyle] = useState(null);
 
-  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace("http://", "https://");
 
   useEffect(() => {
     async function fetchData() {
@@ -42,6 +42,8 @@ export default function TravelPlan() {
           setIsLoading(false);
           return;
         }
+
+        console.log("🚀 호출 URL:", `${VITE_API_BASE_URL}/ai/schedule/`);
 
         const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
           startCity: stored.startCity,
