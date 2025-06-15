@@ -1,5 +1,21 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
 export default function Header () {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    setIsLoggedIn(false);
+    navigate("/Login");
+  };
+
   return (
     <header className="px-8 py-4 shadow bg-white">
       <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
@@ -27,12 +43,20 @@ export default function Header () {
           </Link>
         </nav>
         <div className="flex gap-2">
-          <Link to="/Login" className="text-sm text-blue-600 self-center">
-            로그인
-          </Link>
-          <Link to="/Signup" className="text-sm bg-blue-600 text-white px-4 py-1 rounded">
-            회원가입
-          </Link>
+          {isLoggedIn ? (
+            <button onClick={handleLogout} className="text-sm text-blue-500 self-center">
+              로그아웃
+            </button>
+          ) : (
+            <>
+              <Link to="/Login" className="text-sm text-blue-600 self-center">
+                로그인
+              </Link>
+              <Link to="/Signup" className="text-sm bg-blue-600 text-white px-4 py-1 rounded">
+                회원가입
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
