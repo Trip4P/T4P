@@ -17,7 +17,10 @@ export default function TravelPlan() {
   const [isLoading, setIsLoading] = useState(false);
   const [travelStyle, setTravelStyle] = useState(null);
 
-  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace("http://", "https://");
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(
+    "http://",
+    "https://"
+  );
 
   useEffect(() => {
     async function fetchData() {
@@ -62,31 +65,53 @@ export default function TravelPlan() {
 
         if (Array.isArray(res.data.plans)) {
           setPlans(res.data.plans);
-          localStorage.setItem("travelPlan", JSON.stringify({
-            plans: res.data.plans,
-            peopleCount: stored.peopleCount,
-            endCity: stored.endCity,
-          }));
+          localStorage.setItem(
+            "travelPlan",
+            JSON.stringify({
+              plans: res.data.plans,
+              peopleCount: stored.peopleCount,
+              endCity: stored.endCity,
+            })
+          );
           // 일정 저장 API 호출 (로그인된 경우)
           const accessToken = localStorage.getItem("accessToken");
           if (accessToken) {
             try {
-              await axios.post(`${VITE_API_BASE_URL}/schedule`, {
-                endCity: stored.endCity,
-                startDate: stored.startDate,
-                endDate: stored.endDate,
-                emotions: stored.emotions,
-                companions: stored.companions,
-                peopleCount: stored.peopleCount,
-                aiEmpathy: res.data.aiEmpathy || "",
-                tags: res.data.tags || [],
-                plans: Array.isArray(res.data.plans) ? res.data.plans[0] : {},
-                schedule_json: {},
-              }, {
-                headers: {
-                  Authorization: `Bearer ${accessToken}`,
+              const firstPlan = Array.isArray(res.data.plans)
+                ? res.data.plans[0]
+                : {};
+              const transformedSchedule =
+                firstPlan.schedule?.map((item) => ({
+                  ...item,
+                  name: item.place,
+                  place_id: item.placeId,
+                })) || [];
+
+              const transformedPlan = {
+                ...firstPlan,
+                schedule: transformedSchedule,
+              };
+
+              await axios.post(
+                `${VITE_API_BASE_URL}/schedule`,
+                {
+                  endCity: stored.endCity,
+                  startDate: stored.startDate,
+                  endDate: stored.endDate,
+                  emotions: stored.emotions,
+                  companions: stored.companions,
+                  peopleCount: stored.peopleCount,
+                  aiEmpathy: res.data.aiEmpathy || "",
+                  tags: res.data.tags || [],
+                  plans: transformedPlan,
+                  schedule_json: {},
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                  },
                 }
-              });
+              );
             } catch (postErr) {
               console.error("일정 저장 실패:", postErr);
             }
@@ -138,11 +163,13 @@ export default function TravelPlan() {
         {/* AI 코멘트 */}
         <div className="flex items-start bg-blue-100 p-2 rounded-sm mb-6">
           <div className="mr-3 text-2xl">
-            <img src="/businessman.png" alt="ai 아이콘" className="w-5 h-auto" />
+            <img
+              src="/businessman.png"
+              alt="ai 아이콘"
+              className="w-5 h-auto"
+            />
           </div>
-          <p className="text-sm">
-            {aiEmpathy || "로딩 중"}
-          </p>
+          <p className="text-sm">{aiEmpathy || "로딩 중"}</p>
         </div>
 
         {/* Day Selector */}
