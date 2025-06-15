@@ -65,6 +65,30 @@ export default function TravelPlan() {
             peopleCount: stored.peopleCount,
             endCity: stored.endCity,
           }));
+          // 일정 저장 API 호출 (로그인된 경우)
+          const accessToken = localStorage.getItem("accessToken");
+          if (accessToken) {
+            try {
+              await axios.post(`${VITE_API_BASE_URL}/schedule`, {
+                endCity: stored.endCity,
+                startDate: stored.startDate,
+                endDate: stored.endDate,
+                emotions: stored.emotions,
+                companions: stored.companions,
+                peopleCount: stored.peopleCount,
+                aiEmpathy: res.data.aiEmpathy || "",
+                tags: res.data.tags || [],
+                plans: res.data.plans[0],  // assuming Day 1 for simplicity
+                schedule_json: {},
+              }, {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                }
+              });
+            } catch (postErr) {
+              console.error("일정 저장 실패:", postErr);
+            }
+          }
         } else {
           console.warn("plans가 배열이 아닙니다:", res.data.plans);
           setPlans([]);

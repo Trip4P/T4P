@@ -113,136 +113,150 @@ export default function TravelBudgetInputPage() {
           계산해보세요.
         </h1>
 
-        {/* 여행 정보 입력 */}
-        <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
-          <h1 className="text-xl font-semibold text-blue-700 mb-4">
-            여행 정보 입력
-          </h1>
+        <div className="max-w-3xl mx-auto">
+          {/* 여행 정보 입력 */}
+          <div className="bg-blue-50 p-6 rounded-xl shadow-md mb-6">
+            <h1 className="text-xl font-semibold text-blue-700 mb-4">
+              여행 정보 입력
+            </h1>
 
-          <div className="mb-4">
-            <p className="text-sm text-blue-700 mb-1">출발지 입력</p>
-            <input
-              type="text"
-              value={startCity}
-              onChange={(e) => setStartCtiy(e.target.value)}
-              placeholder="ex) 고속버스터미널"
-              className="w-full border border-blue-300 rounded px-4 py-2"
-            />
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-blue-700 mb-1">도착지 입력</p>
-            <input
-              type="text"
-              value={endCity}
-              onChange={(e) => setEndCity(e.target.value)}
-              placeholder="ex) 잠실"
-              className="w-full border border-blue-300 rounded px-4 py-2"
-            />
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-blue-700 mb-1">인원 수 선택</p>
-            <input
-              type="number"
-              value={peopleCount}
-              onChange={(e) => {
-                const value = e.target.value;
-                setPeopleCount(value === "" ? "" : Number(value));
-              }}
-              placeholder="ex) 3"
-              className="w-full border border-blue-300 rounded px-4 py-2"
-            />
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-6 mb-10">
-            <h2 className="text-blue-700 text-lg font-semibold mb-4">여행 기간</h2>
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex flex-col">
-                <label className="text-blue-700 mb-1 font-medium">여행 시작일</label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setStartDate(date)}
-                  selectStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  placeholderText="시작일 선택"
-                  dateFormat="yyyy-MM-dd"
-                  className="border border-blue-300 rounded px-4 py-2"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-blue-700 mb-1 font-medium">여행 종료일</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setEndDate(date)}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  placeholderText="종료일 선택"
-                  dateFormat="yyyy-MM-dd"
-                  className="border border-blue-300 rounded px-4 py-2"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 버튼 */}
-          <div className="text-center mt-6">
-            <button
-              onClick={fetchBudgetData}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              예상 예산 출력하기
-            </button>
-          </div>
-        </div>
-
-        {isLoading && <LoadingSpinner />}
-
-        {/* 예상 예산 결과 박스 */}
-        {showResult && budgetData && (
-          <div className="bg-white mt-10 p-8 rounded-xl shadow-lg border border-gray-200">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-20 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
-                  <img src="/businessman.png" alt="ai 아이콘" className="w-7 h-auto" />
-                </div>
-                <p className="text-lg font-medium text-gray-800">{aiComment}</p>
-              </div>
-              <p className="text-xl font-bold text-gray-900">
-                총 예산: {totalBudget?.toLocaleString()}원
-              </p>
-            </div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2 mt-5">
-              카테고리별 예상 예산
-            </h3>
-
-            {/* 예산 차트 */}
-            <div className="mt-10 flex justify-center">
-              <Chart
-                categoryBreakdown={budgetData.labels.map((label, idx) => ({
-                  [label]: budgetData.datasets[0].data[idx],
-                }))}
-                totalBudget={totalBudget}
+            <div className="mb-4">
+              <p className="text-sm text-blue-700 mb-1">출발지 입력</p>
+              <input
+                type="text"
+                value={startCity}
+                onChange={(e) => setStartCtiy(e.target.value)}
+                placeholder="ex) 고속버스터미널"
+                className="w-full border border-blue-300 rounded px-4 py-2"
               />
             </div>
 
-            {/* 버튼들 */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="mb-4">
+              <p className="text-sm text-blue-700 mb-1">도착지 입력</p>
+              <input
+                type="text"
+                value={endCity}
+                onChange={(e) => setEndCity(e.target.value)}
+                placeholder="ex) 잠실"
+                className="w-full border border-blue-300 rounded px-4 py-2"
+              />
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-blue-700 mb-1">인원 수 선택</p>
+              <input
+                type="number"
+                value={peopleCount}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setPeopleCount(value === "" ? "" : Number(value));
+                }}
+                placeholder="ex) 3"
+                className="w-full border border-blue-300 rounded px-4 py-2"
+              />
+            </div>
+
+            <div className="bg-blue-50 rounded-xl p-6 mb-10">
+              <h2 className="text-blue-700 text-lg font-semibold mb-4">
+                여행 기간
+              </h2>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col">
+                  <label className="text-blue-700 mb-1 font-medium">
+                    여행 시작일
+                  </label>
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    selectStart
+                    startDate={startDate}
+                    endDate={endDate}
+                    placeholderText="시작일 선택"
+                    dateFormat="yyyy-MM-dd"
+                    className="border border-blue-300 rounded px-4 py-2"
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-blue-700 mb-1 font-medium">
+                    여행 종료일
+                  </label>
+                  <DatePicker
+                    selected={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    selectsEnd
+                    startDate={startDate}
+                    endDate={endDate}
+                    placeholderText="종료일 선택"
+                    dateFormat="yyyy-MM-dd"
+                    className="border border-blue-300 rounded px-4 py-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className="text-center mt-6">
               <button
-                className="border border-gray-400 px-5 py-2.5 rounded-lg hover:bg-gray-100 transition font-medium text-gray-700"
                 onClick={fetchBudgetData}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
               >
-                예산 다시 추천 받기
+                예상 예산 출력하기
               </button>
-              {/* <button className="bg-blue-700 text-white px-5 py-2.5 rounded-lg hover:bg-blue-800 transition font-medium">
-                ✅ 예산 저장하고 일정 보기
-              </button> */}
             </div>
           </div>
-        )}
+
+          {isLoading && <LoadingSpinner />}
+
+          {/* 예상 예산 결과 박스 */}
+          {showResult && budgetData && (
+            <div className="bg-white mt-10 p-8 rounded-xl shadow-lg border border-gray-200">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-14 bg-blue-100 text-blue-700 flex items-center justify-center rounded-full font-bold text-lg">
+                    <img
+                      src="/businessman.png"
+                      alt="ai 아이콘"
+                      className="w-7 h-auto"
+                    />
+                  </div>
+                  <p className="text-lg font-medium text-gray-800">
+                    {aiComment}
+                  </p>
+                </div>
+                <p className="text-xl font-bold text-gray-900">
+                  총 예산: {totalBudget?.toLocaleString()}원
+                </p>
+              </div>
+              <h3 className="text-lg font-semibold mb-4 text-gray-700 border-b pb-2 mt-5">
+                카테고리별 예상 예산
+              </h3>
+
+              {/* 예산 차트 */}
+              <div className="mt-10 flex justify-center">
+                <Chart
+                  categoryBreakdown={budgetData.labels.map((label, idx) => ({
+                    [label]: budgetData.datasets[0].data[idx],
+                  }))}
+                  totalBudget={totalBudget}
+                />
+              </div>
+
+              {/* 버튼들 */}
+              <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  className="border border-gray-400 px-5 py-2.5 rounded-lg hover:bg-gray-100 transition font-medium text-gray-700"
+                  onClick={fetchBudgetData}
+                >
+                  예산 다시 추천 받기
+                </button>
+                {/* <button className="bg-blue-700 text-white px-5 py-2.5 rounded-lg hover:bg-blue-800 transition font-medium">
+                ✅ 예산 저장하고 일정 보기
+                </button> */}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <Footer />
     </>
