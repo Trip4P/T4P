@@ -109,7 +109,7 @@ export default function Signup() {
           {error && <p className="text-red-500 text-sm">{error}</p>}
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+            className="w-full h-12 bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
             disabled={isLoading}
           >
             {isLoading ? <LoadingSpinner /> : "회원가입"}
