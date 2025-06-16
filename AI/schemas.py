@@ -76,12 +76,12 @@ class ScheduleDBResponse(BaseModel):
     endDate: str
     userEmotion: List[str]
     companions: List[str]
-    aiEmpathy: Optional[float]
+    aiEmpathy: Optional[str] = None
     tags: List[str]
     plans: Dict[str, Any]
-
     class Config:
         orm_mode = True
+
 
 # 스케줄 수정 요청
 class ScheduleUpdate(BaseModel):
