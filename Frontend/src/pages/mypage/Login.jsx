@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LoadingSpinner from "../../components/LoadingSpinner";
@@ -12,6 +12,8 @@ export default function Login() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const modalRef = useRef(null);
 
   const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   
@@ -43,9 +45,11 @@ export default function Login() {
 
       console.log("로그인 성공:", response.data);
       localStorage.setItem("accessToken", response.data.access_token);
-      alert("로그인 성공!");
+      setShowSuccessModal(true);
       setForm({ username: "", password: "" });
-      window.location.href = "/";
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } catch (err) {
       if (err.response) {
         if (err.response.status === 401) {
@@ -65,6 +69,13 @@ export default function Login() {
   return (
     <>
       <Header />
+      {/* Success modal shown as a simple message above the login form */}
+      {showSuccessModal && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-center">
+          <p className="text-lg font-semibold mb-1">로그인 성공!</p>
+          <p>잠시 후 메인 페이지로 이동합니다.</p>
+        </div>
+      )}
       <div className="max-w-md mx-auto mt-10 p-6 border rounded shadow">
         <h2 className="text-2xl font-semibold mb-4">로그인</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
