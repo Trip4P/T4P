@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Header from "../../components/Header";
@@ -6,9 +7,11 @@ export default function Mypage() {
   const [schedules, setSchedules] = useState([]);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUser = async () => {
+
       try {
         const token = localStorage.getItem("accessToken");
         const res = await axios.get(
@@ -78,6 +81,14 @@ export default function Mypage() {
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
                   {item.start_date} ~ {item.end_date}
+                </div>
+                <div className="mt-4 text-right">
+                  <button
+                    onClick={() => navigate(`/TravelPlan/${item.id}`)}
+                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700"
+                  >
+                    상세 보기
+                  </button>
                 </div>
               </li>
             ))}
