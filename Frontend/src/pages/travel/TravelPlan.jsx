@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LottieAnimation from "../../components/LottieAnimation";
@@ -8,6 +8,7 @@ import KakaoMapView from "../../components/KakaoMapView";
 
 export default function TravelPlan() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [aiEmpathy, setAiEmpathy] = useState("");
@@ -17,119 +18,147 @@ export default function TravelPlan() {
   const [isLoading, setIsLoading] = useState(false);
   const [travelStyle, setTravelStyle] = useState(null);
 
-  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(
-    "http://",
-    "https://"
-  );
+  // const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(
+  //   "http://",
+  //   "https://"
+  // );
+  const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      try {
-        const cached = localStorage.getItem("travelPlan");
-        const stored = JSON.parse(localStorage.getItem("travelStyle"));
 
-        if (!stored) {
-          console.warn("로컬 스토리지에 사용자 성향 정보 없음");
+      if (id) {
+        // Fetch schedule by ID from backend
+        try {
+          const token = localStorage.getItem("accessToken");
+          const res = await axios.get(`${VITE_API_BASE_URL}/schedule/${id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = res.data;
+          setStartDate(data.startDate);
+          setEndDate(data.endDate);
+          setAiEmpathy(data.aiEmpathy || "AI 코멘트 없음");
+          setTags(data.tags || []);
+
+          const extractedPlans = Object.values(data.plans || {});
+          setPlans(extractedPlans);
+        } catch (err) {
+          console.error("스케줄 불러오기 실패:", err);
+        } finally {
           setIsLoading(false);
-          return;
         }
+      } else {
+        // Run existing AI-based logic
+        try {
+          const cached = localStorage.getItem("travelPlan");
+          const stored = JSON.parse(localStorage.getItem("travelStyle"));
 
-        setTravelStyle(stored);
+          if (!stored) {
+            console.warn("로컬 스토리지에 사용자 성향 정보 없음");
+            setIsLoading(false);
+            return;
+          }
 
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          setPlans(parsed.plans);
+          setTravelStyle(stored);
+
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            setPlans(parsed.plans);
+            setStartDate(stored.startDate);
+            setEndDate(stored.endDate);
+            setAiEmpathy(parsed.aiEmpathy || "AI 코멘트 없음");
+            setIsLoading(false);
+            return;
+          }
+
+          const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
+            startCity: stored.startCity,
+            endCity: stored.endCity,
+            startDate: stored.startDate,
+            endDate: stored.endDate,
+            emotions: stored.emotions,
+            companions: stored.companions,
+            peopleCount: stored.peopleCount,
+          });
+
           setStartDate(stored.startDate);
           setEndDate(stored.endDate);
-          setIsLoading(false);
-          return;
-        }
+          setTags(res.data.tags || []);
+          setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
 
-        console.log("🚀 호출 URL:", `${VITE_API_BASE_URL}/ai/schedule/`);
+          if (Array.isArray(res.data.plans)) {
+            setPlans(res.data.plans);
+            localStorage.setItem(
+              "travelPlan",
+              JSON.stringify({
+                plans: res.data.plans,
+                peopleCount: stored.peopleCount,
+                endCity: stored.endCity,
+                aiEmpathy: res.data.aiEmpathy || "",
+              })
+            );
 
-        const res = await axios.post(`${VITE_API_BASE_URL}/ai/schedule/`, {
-          startCity: stored.startCity,
-          endCity: stored.endCity,
-          startDate: stored.startDate,
-          endDate: stored.endDate,
-          emotions: stored.emotions,
-          companions: stored.companions,
-          peopleCount: stored.peopleCount,
-        });
+            const accessToken = localStorage.getItem("accessToken");
+            if (accessToken) {
+              try {
+                const firstPlan = Array.isArray(res.data.plans)
+                  ? res.data.plans[0]
+                  : {};
+                const transformedSchedule =
+                  firstPlan.schedule?.map((item) => ({
+                    ...item,
+                    name: item.place,
+                    place_id: item.placeId,
+                  })) || [];
 
-        setStartDate(stored.startDate);
-        setEndDate(stored.endDate);
-        setTags(res.data.tags || []);
-        setAiEmpathy(res.data.aiEmpathy || "AI 코멘트 없음");
+                const transformedPlan = {
+                  ...firstPlan,
+                  schedule: transformedSchedule,
+                };
 
-        if (Array.isArray(res.data.plans)) {
-          setPlans(res.data.plans);
-          localStorage.setItem(
-            "travelPlan",
-            JSON.stringify({
-              plans: res.data.plans,
-              peopleCount: stored.peopleCount,
-              endCity: stored.endCity,
-            })
-          );
-          // 일정 저장 API 호출 (로그인된 경우)
-          const accessToken = localStorage.getItem("accessToken");
-          if (accessToken) {
-            try {
-              const firstPlan = Array.isArray(res.data.plans)
-                ? res.data.plans[0]
-                : {};
-              const transformedSchedule =
-                firstPlan.schedule?.map((item) => ({
-                  ...item,
-                  name: item.place,
-                  place_id: item.placeId,
-                })) || [];
-
-              const transformedPlan = {
-                ...firstPlan,
-                schedule: transformedSchedule,
-              };
-
-              await axios.post(
-                `${VITE_API_BASE_URL}/schedule`,
-                {
-                  endCity: stored.endCity,
-                  startDate: stored.startDate,
-                  endDate: stored.endDate,
-                  emotions: stored.emotions,
-                  companions: stored.companions,
-                  peopleCount: stored.peopleCount,
-                  aiEmpathy: res.data.aiEmpathy || "",
-                  tags: res.data.tags || [],
-                  plans: transformedPlan,
-                  schedule_json: {},
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${accessToken}`,
+                await axios.post(
+                  `${VITE_API_BASE_URL}/schedule`,
+                  {
+                    endCity: stored.endCity,
+                    startDate: stored.startDate,
+                    endDate: stored.endDate,
+                    emotions: stored.emotions,
+                    companions: stored.companions,
+                    peopleCount: stored.peopleCount,
+                    aiEmpathy: res.data.aiEmpathy || "",
+                    tags: res.data.tags || [],
+                    plans: transformedPlan,
+                    schedule_json: {},
                   },
-                }
-              );
-            } catch (postErr) {
-              console.error("일정 저장 실패:", postErr);
+                  {
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                  }
+                );
+              } catch (postErr) {
+                console.error("일정 저장 실패:", postErr);
+              }
             }
+          } else {
+            console.warn("plans가 배열이 아닙니다:", res.data.plans);
+            setPlans([]);
           }
-        } else {
-          console.warn("plans가 배열이 아닙니다:", res.data.plans);
-          setPlans([]);
-        }
 
-        setIsLoading(false);
-      } catch (err) {
-        console.error("에러 발생", err);
-        setIsLoading(false);
+          setIsLoading(false);
+        } catch (err) {
+          console.error("에러 발생", err);
+          setIsLoading(false);
+        }
       }
     }
 
     fetchData();
-  }, []);
+  }, [id]);
 
   if (isLoading)
     return (
